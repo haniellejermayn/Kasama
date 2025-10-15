@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutMainBinding
+import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutStarterPageBinding
 import com.mobdeve.s18.group10.group10_mco2.ui.theme.Group10MCO2Theme
 
 class MainActivity : ComponentActivity() {
@@ -19,7 +20,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val viewBinding : LayoutMainBinding = LayoutMainBinding.inflate(layoutInflater)
+        val viewBinding : LayoutStarterPageBinding = LayoutStarterPageBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
     }
 }
