@@ -89,7 +89,7 @@
             android:id="@+id/button_log_in"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/rounded_button_secondary"
+            android:background="@drawable/rounded_button_secondary_light"
             android:fontFamily="@font/open_sans"
             android:stateListAnimator="@null"
             android:text="Log In"
