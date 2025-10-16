@@ -6,10 +6,6 @@ import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewbinding.ViewBinding
-import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutHouseholdSetupBinding
-import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutLoginPageBinding
-import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutMainBinding
-import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutSignupPageBinding
 import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutStarterPageBinding
 
 class MainActivity : AppCompatActivity() {
