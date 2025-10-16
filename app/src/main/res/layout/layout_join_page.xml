@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/button_sign_up2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="36dp"
+        android:layout_marginEnd="32dp"
+        android:background="@drawable/rounded_button_primary"
+        android:elevation="0dp"
+        android:fontFamily="@font/open_sans"
+        android:stateListAnimator="@null"
+        android:text="Join"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editTextText" />
+
+    <EditText
+        android:id="@+id/editTextText"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_weight="1"
+        android:background="@drawable/rounded_button_outline"
+        android:drawableStart="@drawable/kasama_vector"
+        android:drawablePadding="8dp"
+        android:ems="10"
+        android:fontFamily="@font/open_sans"
+        android:hint="Household Code"
+        android:inputType="text"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="@+id/text_sub_3"
+        app:layout_constraintStart_toStartOf="@+id/text_sub_3"
+        app:layout_constraintTop_toBottomOf="@+id/text_sub_3" />
+
+    <TextView
+        android:id="@+id/text_sub_3"
+        android:layout_width="319dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/open_sans"
+        android:lineSpacingExtra="0sp"
+        android:text="Enter the invite code from your housemate to join."
+        android:textAlignment="center"
+        android:textColor="#163B3B"
+        android:textSize="16sp"
+        android:textStyle="italic"
+        app:layout_constraintEnd_toEndOf="@+id/text_sub_"
+        app:layout_constraintHorizontal_bias="0.428"
+        app:layout_constraintStart_toStartOf="@+id/text_sub_"
+        app:layout_constraintTop_toBottomOf="@+id/text_sub_" />
+
+    <TextView
+        android:id="@+id/text_sub_"
+        android:layout_width="312dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/open_sans"
+        android:lineSpacingExtra="-5sp"
+        android:text="Join an existing household."
+        android:textAlignment="center"
+        android:textColor="#143C3C"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.494"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="209dp" />
+
+    <Button
+        android:id="@+id/joinBtn"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="310dp"
+        android:background="@drawable/rounded_button_outline"
+        android:elevation="0dp"
+        android:fontFamily="@font/open_sans"
+        android:stateListAnimator="@null"
+        android:text="Cancel"
+        android:textAllCaps="false"
+        android:textColor="#185557"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
