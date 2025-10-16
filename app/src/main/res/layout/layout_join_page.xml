@@ -66,6 +66,7 @@
         android:id="@+id/text_sub_"
         android:layout_width="312dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="200dp"
         android:fontFamily="@font/open_sans"
         android:lineSpacingExtra="-5sp"
         android:text="Join an existing household."
@@ -76,7 +77,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.494"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="209dp" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/joinBtn"
