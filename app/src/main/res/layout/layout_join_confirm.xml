@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <Button
-        android:id="@+id/button_sign_up3"
+        android:id="@+id/confirmBtn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
@@ -27,7 +27,7 @@
         app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
 
     <Button
-        android:id="@+id/joinBtn2"
+        android:id="@+id/backBtn"
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_marginStart="20dp"
@@ -47,7 +47,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/text_sub_4"
+        android:id="@+id/headerTv"
         android:layout_width="312dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="172dp"
@@ -69,9 +69,9 @@
         android:layout_height="150dp"
         android:layout_marginTop="24dp"
         android:src="@drawable/one_house"
-        app:layout_constraintEnd_toEndOf="@+id/text_sub_4"
-        app:layout_constraintStart_toStartOf="@+id/text_sub_4"
-        app:layout_constraintTop_toBottomOf="@+id/text_sub_4" />
+        app:layout_constraintEnd_toEndOf="@+id/headerTv"
+        app:layout_constraintStart_toStartOf="@+id/headerTv"
+        app:layout_constraintTop_toBottomOf="@+id/headerTv" />
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -87,7 +87,7 @@
         app:layout_constraintTop_toBottomOf="@+id/image_single_house2">
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/householdNameTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
@@ -99,7 +99,7 @@
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/createdByTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
@@ -110,7 +110,7 @@
             android:textStyle="italic" />
 
         <TextView
-            android:id="@+id/textView3"
+            android:id="@+id/numMembersTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"

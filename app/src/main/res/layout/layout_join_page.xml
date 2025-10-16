@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <Button
-        android:id="@+id/button_sign_up2"
+        android:id="@+id/joinBtn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
@@ -23,10 +23,10 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextText" />
+        app:layout_constraintTop_toBottomOf="@+id/householdCodeEtv" />
 
     <EditText
-        android:id="@+id/editTextText"
+        android:id="@+id/householdCodeEtv"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginStart="32dp"
@@ -41,12 +41,12 @@
         android:hint="Household Code"
         android:inputType="text"
         android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="@+id/text_sub_3"
-        app:layout_constraintStart_toStartOf="@+id/text_sub_3"
-        app:layout_constraintTop_toBottomOf="@+id/text_sub_3" />
+        app:layout_constraintEnd_toEndOf="@+id/subheaderTv"
+        app:layout_constraintStart_toStartOf="@+id/subheaderTv"
+        app:layout_constraintTop_toBottomOf="@+id/subheaderTv" />
 
     <TextView
-        android:id="@+id/text_sub_3"
+        android:id="@+id/subheaderTv"
         android:layout_width="319dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -57,13 +57,13 @@
         android:textColor="#163B3B"
         android:textSize="16sp"
         android:textStyle="italic"
-        app:layout_constraintEnd_toEndOf="@+id/text_sub_"
+        app:layout_constraintEnd_toEndOf="@+id/headerTv"
         app:layout_constraintHorizontal_bias="0.428"
-        app:layout_constraintStart_toStartOf="@+id/text_sub_"
-        app:layout_constraintTop_toBottomOf="@+id/text_sub_" />
+        app:layout_constraintStart_toStartOf="@+id/headerTv"
+        app:layout_constraintTop_toBottomOf="@+id/headerTv" />
 
     <TextView
-        android:id="@+id/text_sub_"
+        android:id="@+id/headerTv"
         android:layout_width="312dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="200dp"
@@ -80,7 +80,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/joinBtn"
+        android:id="@+id/cancelBtn"
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_marginStart="20dp"
