@@ -54,37 +54,53 @@
             android:orientation="vertical"
             android:paddingRight="10dp">
 
-            <EditText
-                android:id="@+id/edittext_email"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
                 android:layout_marginBottom="5dp"
-                android:layout_weight="1"
-                android:backgroundTint="#133C3D"
-                android:ems="10"
-                android:fontFamily="@font/open_sans"
-                android:hint="Email"
-                android:inputType="text"
-                android:lineSpacingExtra="10dp"
-                android:paddingBottom="15dp"
-                android:textColor="#133C3D"
-                android:textSize="16sp" />
+                android:theme="@style/Theme.MaterialComponents.Light"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                app:boxBackgroundColor="@android:color/transparent"
+                app:boxStrokeColor="#133C3D"
+                app:boxStrokeWidth="1dp"
+                app:hintTextColor="#133C3D"
+                app:hintTextAppearance="@style/TextAppearance.AppCompat.Small">
 
-            <EditText
-                android:id="@+id/edittext_password"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edittext_email"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/open_sans"
+                    android:hint="Email"
+                    android:inputType="textEmailAddress"
+                    android:textColor="#133C3D"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
                 android:layout_marginBottom="5dp"
-                android:layout_weight="1"
-                android:backgroundTint="#133C3D"
-                android:ems="10"
-                android:fontFamily="@font/open_sans"
-                android:hint="Password"
-                android:inputType="text"
-                android:lineSpacingExtra="10dp"
-                android:paddingBottom="15dp"
-                android:textColor="#133C3D"
-                android:textSize="16sp" />
+                android:theme="@style/Theme.MaterialComponents.Light"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                app:boxBackgroundColor="@android:color/transparent"
+                app:boxStrokeColor="#133C3D"
+                app:boxStrokeWidth="1dp"
+                app:hintTextColor="#133C3D"
+                app:hintTextAppearance="@style/TextAppearance.AppCompat.Small"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="#133C3D">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edittext_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/open_sans"
+                    android:hint="Password"
+                    android:inputType="textPassword"
+                    android:textColor="#133C3D"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>
 

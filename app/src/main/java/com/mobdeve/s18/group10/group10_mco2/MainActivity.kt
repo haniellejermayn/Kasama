@@ -10,13 +10,13 @@ import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutStarterPageBinding
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var viewBinding: ViewBinding
+    private lateinit var viewBinding: LayoutStarterPageBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val viewBinding : LayoutStarterPageBinding = LayoutStarterPageBinding.inflate(layoutInflater)
+        viewBinding = LayoutStarterPageBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
 
         viewBinding.buttonSignUp.setOnClickListener {
