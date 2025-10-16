@@ -30,14 +30,15 @@
             <ImageView
                 android:id="@+id/imageView"
                 android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_height="85dp"
                 android:layout_marginBottom="10dp"
-                tools:src="@tools:sample/avatars" />
+                tools:src="@drawable/kasama_logo_only" />
 
             <TextView
                 android:id="@+id/textView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/open_sans"
                 android:text="Sign Up"
                 android:textSize="20sp"
                 android:textStyle="bold" />
@@ -57,6 +58,7 @@
                 android:layout_marginBottom="10dp"
                 android:layout_weight="1"
                 android:ems="10"
+                android:fontFamily="@font/open_sans"
                 android:hint="Display Name"
                 android:inputType="text"
                 android:textSize="16sp" />
@@ -68,6 +70,7 @@
                 android:layout_marginBottom="10dp"
                 android:layout_weight="1"
                 android:ems="10"
+                android:fontFamily="@font/open_sans"
                 android:hint="Email"
                 android:inputType="text"
                 android:textSize="16sp" />
@@ -79,6 +82,7 @@
                 android:layout_marginBottom="10dp"
                 android:layout_weight="1"
                 android:ems="10"
+                android:fontFamily="@font/open_sans"
                 android:hint="Create Password"
                 android:inputType="text"
                 android:textSize="16sp" />
@@ -90,6 +94,7 @@
                 android:layout_marginBottom="10dp"
                 android:layout_weight="1"
                 android:ems="10"
+                android:fontFamily="@font/open_sans"
                 android:hint="Confirm Password"
                 android:inputType="text"
                 android:textSize="16sp" />
@@ -107,9 +112,12 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/rounded_button_primary"
                 android:elevation="0dp"
+                android:fontFamily="@font/open_sans"
                 android:stateListAnimator="@null"
                 android:text="Sign Up"
-                android:textColor="#ffffff" />
+                android:textAllCaps="false"
+                android:textColor="#ffffff"
+                android:textStyle="bold" />
 
         </LinearLayout>
 
@@ -129,6 +137,7 @@
             android:id="@+id/textView2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/open_sans"
             android:paddingRight="3dp"
             android:text="Already have an account?"
             android:textAlignment="center" />
@@ -137,8 +146,10 @@
             android:id="@+id/textView3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/open_sans"
             android:paddingLeft="3dp"
-            android:text="Log in" />
+            android:text="Log in"
+            android:textStyle="bold" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -2,5 +2,6 @@
 <resources>
     <style name="Theme.Group10MCO2" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">#EEFFFF</item>
+        <item name="fontFamily">@font/open_sans</item>
     </style>
 </resources>

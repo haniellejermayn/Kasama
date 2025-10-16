@@ -21,22 +21,25 @@
 
         <ImageView
             android:id="@+id/image_logo"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:layout_margin="10dp"
-            tools:src="@tools:sample/avatars" />
+            android:layout_width="250dp"
+            android:layout_height="190dp"
+            android:layout_gravity="center"
+            android:layout_margin="5dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/kasama_w_title"
+            tools:src="@drawable/kasama_w_title" />
 
         <TextView
             android:id="@+id/text_sub_1"
             android:layout_width="312dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:fontFamily="@font/inter"
+            android:layout_marginBottom="5dp"
+            android:fontFamily="@font/open_sans"
             android:lineSpacingExtra="-5sp"
             android:text="Your assistant in household management."
             android:textAlignment="center"
             android:textColor="#143C3C"
-            android:textSize="25sp"
+            android:textSize="23sp"
             android:textStyle="bold" />
 
         <TextView
@@ -44,7 +47,7 @@
             android:layout_width="319dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="30dp"
-            android:fontFamily="@font/inter"
+            android:fontFamily="@font/open_sans"
             android:lineSpacingExtra="0sp"
             android:text=" take care of splitting chores and expenses within your household"
             android:textAlignment="center"
@@ -75,23 +78,23 @@
             android:layout_marginBottom="10dp"
             android:background="@drawable/rounded_button_primary"
             android:elevation="0dp"
-            android:fontFamily="@font/inter"
+            android:fontFamily="@font/open_sans"
+            android:stateListAnimator="@null"
             android:text="Sign Up"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:stateListAnimator="@null" />
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/buton_log_in"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/rounded_button_secondary"
-            android:fontFamily="@font/inter"
+            android:fontFamily="@font/open_sans"
+            android:stateListAnimator="@null"
             android:text="Log In"
             android:textAllCaps="false"
             android:textColor="#34A5AC"
-            android:textStyle="bold"
-            android:stateListAnimator="@null" />
+            android:textStyle="bold" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
