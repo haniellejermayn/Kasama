@@ -1,6 +1,7 @@
 package com.mobdeve.s18.group10.group10_mco2
 
 import android.animation.ObjectAnimator
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -43,8 +44,8 @@ class DashboardActivity : AppCompatActivity() {
 
         setupRecyclerViews()
         setupTabListeners()
+        setupButtonListeners()
 
-        // Show chores tab by default
         showTab(Tab.CHORES, animate = false)
     }
 
@@ -78,13 +79,33 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupButtonListeners() {
+        binding.buttonNewChore.setOnClickListener {
+            // TODO: setup
+        }
+
+        binding.buttonViewAllChores.setOnClickListener {
+            // TODO: setup
+        }
+
+        binding.buttonNewNote.setOnClickListener {
+            // TODO: setup
+        }
+
+        binding.buttonViewAllNotes.setOnClickListener {
+            // TODO: setup
+        }
+
+        binding.buttonInviteMember.setOnClickListener {
+            val inviteIntent = Intent(this, InviteActivity::class.java)
+            startActivity(inviteIntent)
+        }
+    }
+
     private fun showTab(tab: Tab, animate: Boolean = true) {
         currentTab = tab
-
-        // Update underlines
         updateTabUnderlines(tab, animate)
 
-        // Update content visibility with fade animation
         if (animate) {
             fadeOutCurrentContent {
                 updateContentVisibility(tab)
@@ -97,12 +118,10 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun updateTabUnderlines(tab: Tab, animate: Boolean) {
         if (animate) {
-            // Animate underlines
             animateUnderline(binding.bottomBorderChores, tab == Tab.CHORES)
             animateUnderline(binding.bottomBorderNotes, tab == Tab.NOTES)
             animateUnderline(binding.bottomBorderHousemates, tab == Tab.HOUSEMATES)
         } else {
-            // Set visibility immediately
             binding.bottomBorderChores.visibility = if (tab == Tab.CHORES) View.VISIBLE else View.INVISIBLE
             binding.bottomBorderNotes.visibility = if (tab == Tab.NOTES) View.VISIBLE else View.INVISIBLE
             binding.bottomBorderHousemates.visibility = if (tab == Tab.HOUSEMATES) View.VISIBLE else View.INVISIBLE
@@ -128,6 +147,7 @@ class DashboardActivity : AppCompatActivity() {
 
                 binding.buttonNewNote.isVisible = false
                 binding.buttonViewAllNotes.isVisible = false
+                binding.buttonInviteMember.isVisible = false
                 binding.dashboardHousemateRecyclerView.isVisible = false
             }
             Tab.NOTES -> {
@@ -137,9 +157,11 @@ class DashboardActivity : AppCompatActivity() {
                 binding.buttonNewChore.isVisible = false
                 binding.buttonViewAllChores.isVisible = false
                 binding.dashboardChoreRecyclerView.isVisible = false
+                binding.buttonInviteMember.isVisible = false
                 binding.dashboardHousemateRecyclerView.isVisible = false
             }
             Tab.HOUSEMATES -> {
+                binding.buttonInviteMember.isVisible = true
                 binding.dashboardHousemateRecyclerView.isVisible = true
 
                 binding.buttonNewChore.isVisible = false
@@ -171,7 +193,6 @@ class DashboardActivity : AppCompatActivity() {
             }
         }
 
-        // Call onComplete after animation
         binding.root.postDelayed(onComplete, 150)
     }
 

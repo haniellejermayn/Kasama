@@ -227,8 +227,8 @@
             android:fontFamily="@font/open_sans_bold"
             android:text="Chores"
             android:textColor="#000000"
-            android:textStyle="bold"
             android:textSize="16sp"
+            android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -253,8 +253,8 @@
             android:fontFamily="@font/open_sans_bold"
             android:text="Notes"
             android:textColor="#000000"
-            android:textStyle="bold"
             android:textSize="16sp"
+            android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="@+id/text_option_chores"
             app:layout_constraintStart_toEndOf="@+id/text_option_chores"
             app:layout_constraintTop_toTopOf="@+id/text_option_chores" />
@@ -279,8 +279,8 @@
             android:fontFamily="@font/open_sans_bold"
             android:text="Housemates"
             android:textColor="#000000"
-            android:textStyle="bold"
             android:textSize="16sp"
+            android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="@+id/text_option_notes"
             app:layout_constraintStart_toEndOf="@+id/text_option_notes"
             app:layout_constraintTop_toTopOf="@+id/text_option_notes" />
@@ -316,7 +316,6 @@
 
     <Button
         android:id="@+id/button_new_note"
-        android:visibility="gone"
         android:layout_width="0dp"
         android:layout_height="40dp"
         android:layout_marginStart="12dp"
@@ -328,54 +327,73 @@
         android:textColor="#F8F8F8"
         android:textSize="14sp"
         android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout3" />
+
+    <Button
+        android:id="@+id/button_invite_member"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/rounded_button_primary"
+        android:fontFamily="@font/open_sans_bold"
+        android:text="Invite Member"
+        android:textColor="#F8F8F8"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout3" />
 
     <TextView
         android:id="@+id/button_view_all_chores"
-        android:visibility="visible"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
         android:fontFamily="@font/open_sans"
         android:text="View All Chores  ➡"
         android:textSize="15sp"
+        android:visibility="visible"
         app:layout_constraintEnd_toEndOf="@+id/button_new_chore"
         app:layout_constraintTop_toBottomOf="@+id/button_new_chore" />
 
     <TextView
         android:id="@+id/button_view_all_notes"
-        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
         android:fontFamily="@font/open_sans"
         android:text="View All Notes  ➡"
         android:textSize="15sp"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@+id/button_new_note"
         app:layout_constraintTop_toBottomOf="@+id/button_new_note" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dashboardChoreRecyclerView"
-        android:visibility="visible"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="12dp"
+        android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_view_all_chores" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dashboardHousemateRecyclerView"
-        android:visibility="gone"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="16dp"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/constraintLayout3"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout3" />
+        app:layout_constraintTop_toBottomOf="@+id/button_invite_member" />
 </androidx.constraintlayout.widget.ConstraintLayout>
