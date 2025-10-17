@@ -1,0 +1,28 @@
+package com.mobdeve.s18.group10.group10_mco2
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView.Adapter
+
+class NoteAdapter(private val note: ArrayList<Note>): Adapter<NoteViewHolder>() {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): NoteViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val view = inflater.inflate(R.layout.layout_item_sticky_note, parent, false)
+
+        return NoteViewHolder(view)
+    }
+
+    override fun onBindViewHolder(
+        holder: NoteViewHolder,
+        position: Int
+    ) {
+        holder.bindNoteData(note.get(position))
+    }
+
+    override fun getItemCount(): Int {
+        return note.size
+    }
+}
