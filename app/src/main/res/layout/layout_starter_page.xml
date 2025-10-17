@@ -53,7 +53,7 @@
             android:layout_marginBottom="30dp"
             android:fontFamily="@font/open_sans"
             android:lineSpacingExtra="0sp"
-            android:text=" take care of splitting chores and expenses within your household"
+            android:text=" take care of splitting chores\nwithin your household"
             android:textAlignment="center"
             android:textColor="#163B3B"
             android:textSize="16sp"

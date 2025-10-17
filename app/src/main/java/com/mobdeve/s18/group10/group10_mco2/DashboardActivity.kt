@@ -8,6 +8,7 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutDashboardPageBinding
 
@@ -15,6 +16,7 @@ class DashboardActivity : AppCompatActivity() {
 
     private lateinit var binding: LayoutDashboardPageBinding
     private lateinit var choreAdapter: ChoreAdapter
+    private lateinit var noteAdapter: NoteAdapter
     private lateinit var housemateAdapter: HousemateAdapter
 
     private var currentTab = Tab.CHORES
@@ -28,6 +30,15 @@ class DashboardActivity : AppCompatActivity() {
         Chore("Change Bed Sheets", "Oct 18, 2025", "Monthly", "Hanielle", false),
         Chore("Wash Dishes", "Oct 18, 2025", "Never", "Hanielle", false),
         Chore("Take Out Trash", "Oct 20, 2025", "Daily", "Hanielle", false),
+    )
+
+    val noteListSample = arrayListOf(
+        Note("No staying up past midnight", "Don't stay up. Please."),
+        Note("There's a spider in the room", "Please deal with it."),
+        Note("Stay Hydrated!", "Please deal with it."),
+        Note("Turn off lights not in use", "Please deal with it."),
+        Note("Replace wallpaper", "Please deal with it."),
+        Note("Throw away tangerine peels", "Please deal with it.")
     )
 
     val housemateListSample = listOf(
@@ -46,6 +57,9 @@ class DashboardActivity : AppCompatActivity() {
         setupTabListeners()
         setupButtonListeners()
 
+        // TODO: we need to create a function that actually computes this
+        binding.circularProgress.progress = 64
+
         showTab(Tab.CHORES, animate = false)
     }
 
@@ -53,6 +67,10 @@ class DashboardActivity : AppCompatActivity() {
         choreAdapter = ChoreAdapter(choreListSample)
         binding.dashboardChoreRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.dashboardChoreRecyclerView.adapter = choreAdapter
+
+        noteAdapter = NoteAdapter(noteListSample)
+        binding.dashboardNotesRecyclerView.layoutManager = GridLayoutManager(this, 3)
+        binding.dashboardNotesRecyclerView.adapter = noteAdapter
 
         housemateAdapter = HousemateAdapter(housemateListSample)
         binding.dashboardHousemateRecyclerView.layoutManager = LinearLayoutManager(this)
@@ -147,12 +165,14 @@ class DashboardActivity : AppCompatActivity() {
 
                 binding.buttonNewNote.isVisible = false
                 binding.buttonViewAllNotes.isVisible = false
+                binding.dashboardNotesRecyclerView.isVisible = false
                 binding.buttonInviteMember.isVisible = false
                 binding.dashboardHousemateRecyclerView.isVisible = false
             }
             Tab.NOTES -> {
                 binding.buttonNewNote.isVisible = true
                 binding.buttonViewAllNotes.isVisible = true
+                binding.dashboardNotesRecyclerView.isVisible = true
 
                 binding.buttonNewChore.isVisible = false
                 binding.buttonViewAllChores.isVisible = false
@@ -169,6 +189,7 @@ class DashboardActivity : AppCompatActivity() {
                 binding.dashboardChoreRecyclerView.isVisible = false
                 binding.buttonNewNote.isVisible = false
                 binding.buttonViewAllNotes.isVisible = false
+                binding.dashboardNotesRecyclerView.isVisible = false
             }
         }
     }
@@ -177,9 +198,11 @@ class DashboardActivity : AppCompatActivity() {
         val viewsToFade = listOf(
             binding.buttonNewChore,
             binding.buttonNewNote,
+            binding.buttonInviteMember,
             binding.buttonViewAllChores,
             binding.buttonViewAllNotes,
             binding.dashboardChoreRecyclerView,
+            binding.dashboardNotesRecyclerView,
             binding.dashboardHousemateRecyclerView
         )
 
@@ -200,9 +223,11 @@ class DashboardActivity : AppCompatActivity() {
         val viewsToFade = listOf(
             binding.buttonNewChore,
             binding.buttonNewNote,
+            binding.buttonInviteMember,
             binding.buttonViewAllChores,
             binding.buttonViewAllNotes,
             binding.dashboardChoreRecyclerView,
+            binding.dashboardNotesRecyclerView,
             binding.dashboardHousemateRecyclerView
         )
 

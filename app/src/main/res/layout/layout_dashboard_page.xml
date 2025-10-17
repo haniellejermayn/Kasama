@@ -113,7 +113,7 @@
             android:fontFamily="@font/open_sans_bold"
             android:text="Housemate"
             android:textColor="#FDFDFD"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -129,7 +129,7 @@
             android:fontFamily="@font/open_sans_bold"
             android:text="has been super productive!"
             android:textColor="#FDFDFD"
-            android:textSize="11sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -179,7 +179,7 @@
             android:id="@+id/recent_notes_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="12dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             android:fontFamily="@font/open_sans_bold"
@@ -385,6 +385,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_view_all_chores" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/dashboardNotesRecyclerView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="12dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_view_all_notes" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dashboardHousemateRecyclerView"
