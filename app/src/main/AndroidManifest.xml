@@ -32,7 +32,7 @@
             android:name=".DashboardActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.AppCompat.DayNight">
+            android:theme="@style/Theme.Group10MCO2">
         </activity>
 
         <meta-data
