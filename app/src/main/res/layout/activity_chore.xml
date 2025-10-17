@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+tools:context=".ChoreActivity">
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/header_chore"
+    android:layout_width="0dp"
+    android:layout_height="200dp"
+    android:background="#32AAAF"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent">
+
+    <TextView
+        android:id="@+id/text_option_daily_chore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginBottom="22dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:fontFamily="@font/open_sans_bold"
+        android:text="Daily"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <View
+        android:id="@+id/bottom_border_daily"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:background="@drawable/bottom_border_rounded"
+        app:layout_constraintEnd_toEndOf="@+id/text_option_daily_chore"
+        app:layout_constraintStart_toStartOf="@+id/text_option_daily_chore"
+        app:layout_constraintTop_toBottomOf="@+id/text_option_daily_chore" />
+
+    <TextView
+        android:id="@+id/text_option_weekly_chore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginBottom="22dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:fontFamily="@font/open_sans_bold"
+        android:text="Weekly"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/text_option_daily_chore" />
+
+    <View
+        android:id="@+id/bottom_border_weekly"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:background="@drawable/bottom_border_rounded"
+        app:layout_constraintEnd_toEndOf="@+id/text_option_weekly_chore"
+        app:layout_constraintStart_toStartOf="@+id/text_option_weekly_chore"
+        app:layout_constraintTop_toBottomOf="@+id/text_option_weekly_chore" />
+
+    <TextView
+        android:id="@+id/text_option_monthly_chore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginBottom="22dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:fontFamily="@font/open_sans_bold"
+        android:text="Monthly"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/text_option_weekly_chore" />
+
+    <View
+        android:id="@+id/bottom_border_monthly"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:background="@drawable/bottom_border_rounded"
+        app:layout_constraintEnd_toEndOf="@+id/text_option_monthly_chore"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="@+id/text_option_monthly_chore"
+        app:layout_constraintTop_toBottomOf="@+id/text_option_monthly_chore" />
+
+    <TextView
+        android:id="@+id/text_header_chore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="40dp"
+        android:fontFamily="@font/open_sans_bold"
+        android:text="Chores"
+        android:textColor="#FFFCFC"
+        android:textSize="34sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/chore_progress_header"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:padding="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/header_chore">
+
+        <TextView
+            android:id="@+id/text_chore_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/open_sans_bold"
+            android:text="Today"
+            android:textColor="#000000"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/chore_progress"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/text_chore_date">
+
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="8dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="24dp"
+                android:layout_weight="1"
+                android:backgroundTint="#B2133C3D"
+                android:indeterminate="false"
+                android:max="100"
+                android:progress="25"
+                android:progressDrawable="@drawable/progress_horizontal_rounded"
+                android:progressTint="#32AAAF"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/progress_count"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/progress_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/open_sans_bold"
+                android:text="1 / 4"
+                android:textColor="#000000"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/choreRecyclerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/chore_progress_header"
+        tools:listitem="@layout/item_chore" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
