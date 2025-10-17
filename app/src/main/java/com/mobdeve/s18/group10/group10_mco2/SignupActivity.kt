@@ -10,7 +10,6 @@ class SignupActivity : AppCompatActivity() {
 
     private lateinit var viewBinding: LayoutSignupPageBinding
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewBinding = LayoutSignupPageBinding.inflate(layoutInflater)
@@ -20,6 +19,11 @@ class SignupActivity : AppCompatActivity() {
             val loginIntent = Intent(this, LoginActivity::class.java)
             startActivity(loginIntent)
             finish()
+        }
+
+        viewBinding.buttonSignup.setOnClickListener {
+            val profileSetupIntent = Intent(this, ProfileSetupActivity::class.java)
+            startActivity(profileSetupIntent)
         }
     }
 }

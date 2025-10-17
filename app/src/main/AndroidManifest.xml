@@ -24,6 +24,10 @@
         </activity>
         <activity android:name=".SignupActivity" android:theme="@style/Theme.Group10MCO2" />
         <activity android:name=".LoginActivity" android:theme="@style/Theme.Group10MCO2" />
+        <activity android:name=".ProfileSetupActivity" android:theme="@style/Theme.Group10MCO2" />
+        <activity android:name=".HouseholdSetupActivity" android:theme="@style/Theme.Group10MCO2" />
+        <activity android:name=".CreateHouseholdActivity" android:theme="@style/Theme.Group10MCO2" />
+        <activity android:name=".InviteActivity" android:theme="@style/Theme.Group10MCO2" />
     </application>
 
 </manifest>
