@@ -19,5 +19,11 @@ class LoginActivity : AppCompatActivity() {
             startActivity(signupIntent)
             finish()
         }
+
+        viewBinding.buttonLogin.setOnClickListener {
+            val dashboardIntent = Intent(this, DashboardActivity::class.java)
+            startActivity(dashboardIntent)
+            finish()
+        }
     }
 }
