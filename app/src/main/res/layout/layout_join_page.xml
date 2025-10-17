@@ -67,7 +67,7 @@
         android:id="@+id/headerTv"
         android:layout_width="312dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="200dp"
+        android:layout_marginTop="250dp"
         android:fontFamily="@font/open_sans"
         android:lineSpacingExtra="-5sp"
         android:text="Join an existing household."
@@ -82,11 +82,10 @@
 
     <Button
         android:id="@+id/cancelBtn"
-        android:layout_width="match_parent"
+        android:layout_width="80dp"
         android:layout_height="40dp"
         android:layout_marginStart="20dp"
         android:layout_marginTop="20dp"
-        android:layout_marginEnd="310dp"
         android:background="@drawable/rounded_button_outline_dark"
         android:elevation="0dp"
         android:fontFamily="@font/open_sans"
@@ -96,7 +95,6 @@
         android:textColor="#185557"
         android:textSize="14sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
