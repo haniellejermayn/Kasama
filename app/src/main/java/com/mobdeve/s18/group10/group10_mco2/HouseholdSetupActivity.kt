@@ -18,5 +18,10 @@ class HouseholdSetupActivity : AppCompatActivity() {
             val createHouseholdIntent = Intent(this, CreateHouseholdActivity::class.java)
             startActivity(createHouseholdIntent)
         }
+
+        viewBinding.buttonJoin.setOnClickListener {
+            val joinHouseholdIntent = Intent(this, JoinActivity::class.java)
+            startActivity(joinHouseholdIntent)
+        }
     }
 }

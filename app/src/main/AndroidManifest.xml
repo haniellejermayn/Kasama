@@ -28,6 +28,8 @@
         <activity android:name=".HouseholdSetupActivity" android:theme="@style/Theme.Group10MCO2" />
         <activity android:name=".CreateHouseholdActivity" android:theme="@style/Theme.Group10MCO2" />
         <activity android:name=".InviteActivity" android:theme="@style/Theme.Group10MCO2" />
+        <activity android:name=".JoinActivity" android:theme="@style/Theme.Group10MCO2" />
+        <activity android:name=".JoinConfirmActivity" android:theme="@style/Theme.Group10MCO2" />
     </application>
 
 </manifest>
