@@ -3,13 +3,13 @@ package com.mobdeve.s18.group10.group10_mco2
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.mobdeve.s18.group10.group10_mco2.databinding.ActivityChoreBinding
-import com.mobdeve.s18.group10.group10_mco2.databinding.ItemChoreBinding
+import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutChorePageBinding
+import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutItemChoreBinding
 
 class ChoreAdapter(private var choreData: List<Chore>) : RecyclerView.Adapter<ChoreViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChoreViewHolder {
-        val binding = ItemChoreBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = LayoutItemChoreBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ChoreViewHolder(binding)
     }
 

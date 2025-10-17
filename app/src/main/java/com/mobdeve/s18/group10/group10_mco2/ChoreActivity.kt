@@ -5,7 +5,7 @@ import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.mobdeve.s18.group10.group10_mco2.databinding.ActivityChoreBinding
+import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutChorePageBinding
 import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutStarterPageBinding
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.cardview.widget.CardView
@@ -19,7 +19,7 @@ import java.time.format.DateTimeFormatter
 
 class ChoreActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityChoreBinding
+    private lateinit var binding: LayoutChorePageBinding
     private lateinit var choreAdapter: ChoreAdapter
     val choreListSample = listOf(
         Chore("Clean Bathroom", "Oct 17, 2025", "Weekly", "Hanielle", false),
@@ -40,7 +40,7 @@ class ChoreActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        binding = ActivityChoreBinding.inflate(layoutInflater)
+        binding = LayoutChorePageBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         choreAdapter = ChoreAdapter(choreListSample)

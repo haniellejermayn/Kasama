@@ -6,11 +6,11 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import com.mobdeve.s18.group10.group10_mco2.databinding.ActivityChoreBinding
-import com.mobdeve.s18.group10.group10_mco2.databinding.ItemChoreBinding
+import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutChorePageBinding
+import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutItemChoreBinding
 import androidx.core.graphics.toColorInt
 
-class ChoreViewHolder(private val binding: ItemChoreBinding) : RecyclerView.ViewHolder(binding.root) {
+class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerView.ViewHolder(binding.root) {
 
     fun bindData(chore: Chore, adapter: ChoreAdapter) {
         val context = binding.root.context

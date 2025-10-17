@@ -178,6 +178,6 @@ tools:context=".ChoreActivity">
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/chore_progress_header"
-        tools:listitem="@layout/item_chore" />
+        tools:listitem="@layout/layout_item_chore" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
