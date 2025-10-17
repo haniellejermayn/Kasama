@@ -55,6 +55,8 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.cardview)
     implementation(libs.material)
+    implementation(libs.androidx.appcompat)
+    implementation("com.google.android.material:material:1.13.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
