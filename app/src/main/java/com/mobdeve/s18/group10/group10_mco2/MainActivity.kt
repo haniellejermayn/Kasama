@@ -5,7 +5,11 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
+import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutNotesPageBinding
 import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutStarterPageBinding
 
 class MainActivity : AppCompatActivity() {

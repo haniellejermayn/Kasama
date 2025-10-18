@@ -4,7 +4,7 @@
         <item name="android:windowBackground">#EEFFFF</item>
         <item name="fontFamily">@font/open_sans</item>
 
-        <!-- Force buttons to use their background drawable, not theme color -->
         <item name="buttonStyle">@style/Widget.AppCompat.Button</item>
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Material3.Corner.Medium</item>
     </style>
 </resources>

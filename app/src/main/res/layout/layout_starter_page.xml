@@ -29,6 +29,7 @@
             android:layout_height="190dp"
             android:layout_gravity="center"
             android:layout_margin="5dp"
+            android:layout_marginBottom="20dp"
             android:scaleType="centerInside"
             android:src="@drawable/kasama_w_title"
             tools:src="@drawable/kasama_w_title" />
@@ -37,26 +38,27 @@
             android:id="@+id/text_sub_1"
             android:layout_width="312dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
             android:layout_marginBottom="5dp"
             android:fontFamily="@font/open_sans"
             android:lineSpacingExtra="-5sp"
             android:text="Your assistant in household management."
             android:textAlignment="center"
             android:textColor="#143C3C"
-            android:textSize="23sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/text_sub_2"
-            android:layout_width="319dp"
+            android:layout_width="263dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="30dp"
             android:fontFamily="@font/open_sans"
             android:lineSpacingExtra="0sp"
-            android:text=" take care of splitting chores\nwithin your household"
+            android:text=" take care of splitting chores within your household"
             android:textAlignment="center"
             android:textColor="#163B3B"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="italic" />
 
     </LinearLayout>

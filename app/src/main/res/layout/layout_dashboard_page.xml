@@ -25,11 +25,12 @@
         android:id="@+id/cardView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="15dp"
         android:layout_marginTop="12dp"
         app:cardBackgroundColor="@android:color/white"
         app:cardCornerRadius="12dp"
         app:cardElevation="4dp"
-        app:layout_constraintStart_toStartOf="@+id/text_dashboard_header"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_dashboard_header">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -98,10 +99,11 @@
         android:id="@+id/constraintLayout"
         android:layout_width="181dp"
         android:layout_height="140dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="15dp"
         android:background="@drawable/rounded_button_primary"
-        app:layout_constraintStart_toEndOf="@+id/cardView"
-        app:layout_constraintTop_toTopOf="@+id/cardView">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_dashboard_header">
 
         <TextView
             android:id="@+id/text_housemate"
@@ -309,7 +311,7 @@
         android:textColor="#F8F8F8"
         android:textSize="14sp"
         android:textStyle="bold"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout3" />
@@ -327,7 +329,7 @@
         android:textColor="#F8F8F8"
         android:textSize="14sp"
         android:textStyle="bold"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout3" />
@@ -356,9 +358,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
         android:fontFamily="@font/open_sans"
-        android:text="View All Chores  ➡"
+        android:text="View All Chores"
         android:textSize="15sp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@+id/button_new_chore"
         app:layout_constraintTop_toBottomOf="@+id/button_new_chore" />
 
@@ -366,12 +368,13 @@
         android:id="@+id/button_view_all_notes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="12dp"
         android:fontFamily="@font/open_sans"
-        android:text="View All Notes  ➡"
+        android:text="View All Notes"
         android:textSize="15sp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="@+id/button_new_note"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_new_note" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -381,7 +384,7 @@
         android:layout_marginStart="12dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="12dp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_view_all_chores" />
@@ -391,9 +394,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="12dp"
         android:layout_marginEnd="12dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_view_all_notes" />

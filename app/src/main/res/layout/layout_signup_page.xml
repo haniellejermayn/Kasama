@@ -69,7 +69,7 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edittext_display_name"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="48dp"
                     android:fontFamily="@font/open_sans"
                     android:hint="Display Name"
                     android:inputType="text"
@@ -92,7 +92,7 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edittext_email"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="48dp"
                     android:fontFamily="@font/open_sans"
                     android:hint="Email"
                     android:inputType="textEmailAddress"
@@ -117,7 +117,7 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edittext_password_create"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="48dp"
                     android:fontFamily="@font/open_sans"
                     android:hint="Create Password"
                     android:inputType="textPassword"
@@ -142,7 +142,7 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edittext_password_confirm"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="48dp"
                     android:fontFamily="@font/open_sans"
                     android:hint="Confirm Password"
                     android:inputType="textPassword"
