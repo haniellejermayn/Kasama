@@ -4,7 +4,9 @@ import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
 import android.content.ContextWrapper
+import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.view.ContextThemeWrapper
@@ -108,7 +110,13 @@ fun showChoreBottomSheet(
         }
     }
 
+    bottomSheet.window?.setBackgroundDrawableResource(android.R.color.transparent)
     bottomSheet.setContentView(binding.root)
+    bottomSheet.setOnShowListener {
+        val bottomSheetView =
+            bottomSheet.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheetView?.setBackgroundColor(Color.TRANSPARENT)
+    }
     bottomSheet.show()
 }
 
