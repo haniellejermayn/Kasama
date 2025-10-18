@@ -61,6 +61,12 @@ class DashboardActivity : AppCompatActivity() {
         binding.circularProgress.progress = 64
 
         showTab(Tab.CHORES, animate = false)
+
+        // onclick listeners
+        binding.buttonViewAllNotes.setOnClickListener {
+            val allNotesIntent = Intent(this, NoteActivity::class.java)
+            startActivity(allNotesIntent)
+        }
     }
 
     private fun setupRecyclerViews() {

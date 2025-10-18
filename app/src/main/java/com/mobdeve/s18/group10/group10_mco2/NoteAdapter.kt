@@ -3,6 +3,7 @@ package com.mobdeve.s18.group10.group10_mco2
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView.Adapter
+import kotlin.random.Random
 
 class NoteAdapter(private val note: ArrayList<Note>): Adapter<NoteViewHolder>() {
     override fun onCreateViewHolder(
