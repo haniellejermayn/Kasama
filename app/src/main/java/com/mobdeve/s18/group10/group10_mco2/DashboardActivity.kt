@@ -235,6 +235,11 @@ class DashboardActivity : AppCompatActivity() {
             val inviteIntent = Intent(this, InviteActivity::class.java)
             startActivity(inviteIntent)
         }
+
+        binding.logOut.setOnClickListener {
+            val loginIntent = Intent(this, LoginActivity::class.java)
+            startActivity(loginIntent)
+        }
     }
 
     private fun updateChoreProgress() {
