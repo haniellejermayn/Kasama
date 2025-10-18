@@ -77,6 +77,10 @@ class DashboardActivity : AppCompatActivity() {
             )
         }
 
+        choreAdapter.setOnChoreCompletedListener {
+            updateChoreProgress()
+        }
+
         noteAdapter = NoteAdapter(noteListSample)
         binding.dashboardNotesRecyclerView.layoutManager = GridLayoutManager(this, 3)
         binding.dashboardNotesRecyclerView.adapter = noteAdapter

@@ -8,6 +8,7 @@ import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutItemChoreBinding
 class ChoreAdapter(private var choreData: List<Chore>) : RecyclerView.Adapter<ChoreViewHolder>() {
 
     private var onChoreClickListener: ((Chore) -> Unit)? = null
+    private var onChoreCompletedListener: (() -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChoreViewHolder {
         val binding = LayoutItemChoreBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -16,7 +17,7 @@ class ChoreAdapter(private var choreData: List<Chore>) : RecyclerView.Adapter<Ch
 
     override fun onBindViewHolder(holder: ChoreViewHolder, position: Int) {
         val currentChore = choreData[position]
-        holder.bindData(currentChore, this, onChoreClickListener)
+        holder.bindData(currentChore, this, onChoreClickListener, onChoreCompletedListener)
     }
 
     override fun getItemCount(): Int {
@@ -30,5 +31,9 @@ class ChoreAdapter(private var choreData: List<Chore>) : RecyclerView.Adapter<Ch
 
     fun setOnChoreClickListener(listener: (Chore) -> Unit) {
         onChoreClickListener = listener
+    }
+
+    fun setOnChoreCompletedListener(listener: () -> Unit) {
+        onChoreCompletedListener = listener
     }
 }
