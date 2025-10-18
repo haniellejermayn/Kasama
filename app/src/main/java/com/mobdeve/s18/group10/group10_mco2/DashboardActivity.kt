@@ -12,6 +12,7 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -134,6 +135,7 @@ class DashboardActivity : AppCompatActivity() {
         dimView.visibility = View.VISIBLE
         dimView.alpha = 0f
         dimView.animate().alpha(1f).setDuration(300).start()
+        dimView.elevation = 100f
 
         sideTab.bringToFront()
         dimView.bringToFront()
