@@ -37,7 +37,7 @@ class DashboardActivity : AppCompatActivity() {
         CHORES, NOTES, HOUSEMATES
     }
 
-    val choreListSample = listOf(
+    val choreListSample = mutableListOf(
         Chore("Clean Bathroom", "Oct 17, 2025", "Weekly", listOf("Hanielle"), false),
         Chore("Change Bed Sheets", "Oct 18, 2025", "Monthly", listOf("Hanielle", "Hep"), false),
         Chore("Wash Dishes", "Oct 18, 2025", "Never", listOf("Kelsey"), false),
@@ -209,7 +209,12 @@ class DashboardActivity : AppCompatActivity() {
             showChoreBottomSheet(
                 context = this,
                 availableHousemates = housemateNames,
-                chore = null
+                chore = null,
+                onSave = { newChore ->
+                    (choreListSample as? MutableList)?.add(newChore)
+                    choreAdapter.setChores(choreListSample)
+                    updateChoreProgress()
+                }
             )
         }
 

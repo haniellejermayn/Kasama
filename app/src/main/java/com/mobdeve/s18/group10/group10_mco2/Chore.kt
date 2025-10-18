@@ -1,10 +1,10 @@
 package com.mobdeve.s18.group10.group10_mco2
 
 class Chore(
-    val title: String,
-    val dueDate: String,
-    val frequency: String,
-    val assignedToList: List<String>,
+    var title: String,
+    var dueDate: String,
+    var frequency: String,
+    var assignedToList: List<String>,
     var isCompleted: Boolean = false
 ) {
     // Helper function to get assignees as a formatted string

@@ -21,7 +21,8 @@ import java.util.*
 fun showChoreBottomSheet(
     context: Context,
     availableHousemates: List<String>,
-    chore: Chore? = null
+    chore: Chore? = null,
+    onSave: (Chore) -> Unit = {}
 ) {
     val bottomSheet = BottomSheetDialog(context)
     bottomSheet.behavior.isFitToContents = true
@@ -88,7 +89,6 @@ fun showChoreBottomSheet(
         bottomSheet.dismiss()
     }
 
-    // TODO: Properly implement save button (currently toast only)
     binding.buttonSave.setOnClickListener {
         val title = binding.editTextChoreTitle.text.toString().trim()
         val dueDate = binding.textDueDate.text.toString()
@@ -105,12 +105,29 @@ fun showChoreBottomSheet(
                 Toast.makeText(context, "Please select a due date", Toast.LENGTH_SHORT).show()
             }
             else -> {
-                val message = if (chore == null) {
-                    "Created: $title\nAssigned to: ${selectedAssignees.joinToString(", ")}\nDue: $dueDate\nRepeats: $repeats"
+                // Create or update chore
+                val savedChore = if (chore == null) {
+                    Chore(
+                        title = title,
+                        dueDate = dueDate,
+                        frequency = repeats,
+                        assignedToList = selectedAssignees,
+                        isCompleted = false
+                    )
                 } else {
-                    "Updated: $title\nAssigned to: ${selectedAssignees.joinToString(", ")}\nDue: $dueDate\nRepeats: $repeats"
+                    chore.apply {
+                        this.title = title
+                        this.dueDate = dueDate
+                        this.frequency = repeats
+                        this.assignedToList = selectedAssignees
+                    }
                 }
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+
+                // Call the callback with the saved chore
+                onSave(savedChore)
+
+                val action = if (chore == null) "Created" else "Updated"
+                Toast.makeText(context, "$action: $title", Toast.LENGTH_SHORT).show()
                 bottomSheet.dismiss()
             }
         }
@@ -132,7 +149,6 @@ private fun addChipToGroup(
     selectedAssignees: MutableList<String>,
     context: Context
 ) {
-    // Use ContextThemeWrapper to apply Material theme locally
     val themedContext = ContextThemeWrapper(context, com.google.android.material.R.style.Theme_MaterialComponents)
 
     val chip = Chip(themedContext).apply {
