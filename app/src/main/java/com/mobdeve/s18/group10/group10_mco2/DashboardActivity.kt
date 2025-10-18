@@ -3,14 +3,19 @@ package com.mobdeve.s18.group10.group10_mco2
 import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutBottomNoteDetailBinding
 import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutDashboardPageBinding
+import com.mobdeve.s18.group10.group10_mco2.utils.showNoteBottomSheet
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -62,10 +67,18 @@ class DashboardActivity : AppCompatActivity() {
 
         showTab(Tab.CHORES, animate = false)
 
-        // onclick listeners
+        // ==== ONCLICK LISTENERS ==== //
         binding.buttonViewAllNotes.setOnClickListener {
             val allNotesIntent = Intent(this, NoteActivity::class.java)
             startActivity(allNotesIntent)
+        }
+
+        binding.buttonNewNote.setOnClickListener {
+            showNoteBottomSheet(this) { title, content ->
+                val newNote = Note(title, content)
+                noteListSample.add(newNote)
+                noteAdapter.notifyItemInserted(noteListSample.size - 1)
+            }
         }
     }
 

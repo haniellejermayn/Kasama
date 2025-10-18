@@ -10,6 +10,7 @@ import android.view.View
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutBottomNoteDetailBinding
+import com.mobdeve.s18.group10.group10_mco2.utils.showNoteBottomSheet
 import kotlin.random.Random
 
 class NoteAdapter(private val note: ArrayList<Note>): Adapter<NoteViewHolder>() {
@@ -30,22 +31,10 @@ class NoteAdapter(private val note: ArrayList<Note>): Adapter<NoteViewHolder>() 
         holder.bindNoteData(note.get(position))
 
         holder.itemView.setOnClickListener {
-            val bottomSheet = BottomSheetDialog(holder.itemView.context)
-            val binding = LayoutBottomNoteDetailBinding.inflate(
-                LayoutInflater.from(holder.itemView.context)
-            )
-
-            binding.editTextTitle.setText(note[position].title)
-            binding.editTextContent.setText(note[position].content)
-
-            binding.buttonCancel.setOnClickListener { bottomSheet.dismiss() }
-            binding.buttonSave.setOnClickListener {
-                Toast.makeText(holder.itemView.context, "Note saved!", Toast.LENGTH_SHORT).show()
-                bottomSheet.dismiss()
+            showNoteBottomSheet(holder.itemView.context, note[position]) { title, content ->
+                note[position].update(title, content)
+                notifyItemChanged(position)
             }
-
-            bottomSheet.setContentView(binding.root)
-            bottomSheet.show()
         }
     }
 

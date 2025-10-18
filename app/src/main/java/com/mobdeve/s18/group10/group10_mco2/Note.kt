@@ -6,4 +6,9 @@ class Note(title : String, content : String) {
 
     var content = content
         private set
+
+    fun update(newTitle: String, newContent: String) {
+        title = newTitle
+        content = newContent
+    }
 }
