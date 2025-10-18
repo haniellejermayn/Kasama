@@ -66,20 +66,6 @@ class DashboardActivity : AppCompatActivity() {
         binding.circularProgress.progress = 64
 
         showTab(Tab.CHORES, animate = false)
-
-        // ==== ONCLICK LISTENERS ==== //
-        binding.buttonViewAllNotes.setOnClickListener {
-            val allNotesIntent = Intent(this, NoteActivity::class.java)
-            startActivity(allNotesIntent)
-        }
-
-        binding.buttonNewNote.setOnClickListener {
-            showNoteBottomSheet(this) { title, content ->
-                val newNote = Note(title, content)
-                noteListSample.add(newNote)
-                noteAdapter.notifyItemInserted(noteListSample.size - 1)
-            }
-        }
     }
 
     private fun setupRecyclerViews() {
@@ -122,15 +108,21 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         binding.buttonViewAllChores.setOnClickListener {
-            // TODO: setup
-        }
-
-        binding.buttonNewNote.setOnClickListener {
-            // TODO: setup
+            val allChoresIntent = Intent(this, ChoreActivity::class.java)
+            startActivity(allChoresIntent)
         }
 
         binding.buttonViewAllNotes.setOnClickListener {
-            // TODO: setup
+            val allNotesIntent = Intent(this, NoteActivity::class.java)
+            startActivity(allNotesIntent)
+        }
+
+        binding.buttonNewNote.setOnClickListener {
+            showNoteBottomSheet(this) { title, content ->
+                val newNote = Note(title, content)
+                noteListSample.add(newNote)
+                noteAdapter.notifyItemInserted(noteListSample.size - 1)
+            }
         }
 
         binding.buttonInviteMember.setOnClickListener {
