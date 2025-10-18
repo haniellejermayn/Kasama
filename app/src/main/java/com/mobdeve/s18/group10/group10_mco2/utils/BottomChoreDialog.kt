@@ -40,6 +40,12 @@ fun showChoreBottomSheet(
         }
     }
 
+    if (chore == null) {
+        val calendar = Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("EEEE, MMMM dd", Locale.getDefault())
+        binding.textDueDate.text = dateFormat.format(calendar.time)
+    }
+
     val repeatOptions = arrayOf("Never", "Daily", "Weekly", "Monthly", "Yearly")
     val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, repeatOptions)
     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -95,7 +101,7 @@ fun showChoreBottomSheet(
             selectedAssignees.isEmpty() -> {
                 Toast.makeText(context, "Please assign to at least one person", Toast.LENGTH_SHORT).show()
             }
-            dueDate == "Monday, October 20" && chore == null -> {
+            dueDate.isBlank() -> {
                 Toast.makeText(context, "Please select a due date", Toast.LENGTH_SHORT).show()
             }
             else -> {
