@@ -2,11 +2,16 @@ package com.mobdeve.s18.group10.group10_mco2
 
 import android.animation.ObjectAnimator
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,8 +25,12 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var choreAdapter: ChoreAdapter
     private lateinit var noteAdapter: NoteAdapter
     private lateinit var housemateAdapter: HousemateAdapter
+    private lateinit var householdAdapter: HouseholdAdapter
 
     private var currentTab = Tab.CHORES
+    private var isSideTabOpen = false
+    private lateinit var dimView: View
+    private lateinit var sideTab: ConstraintLayout
 
     enum class Tab {
         CHORES, NOTES, HOUSEMATES
@@ -49,6 +58,11 @@ class DashboardActivity : AppCompatActivity() {
         Housemate("Kelsey", 4, R.drawable.kasama_profile_default),
     )
 
+    val householdListSample = arrayListOf(
+        Household("Dormies"),
+        Household("Home")
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -61,6 +75,83 @@ class DashboardActivity : AppCompatActivity() {
         updateChoreProgress()
 
         showTab(Tab.CHORES, animate = false)
+
+        setupSideTab()
+    }
+
+    private fun setupSideTab() {
+        val rootLayout = binding.dashboardPage
+        sideTab = binding.sideTab
+
+        householdAdapter = HouseholdAdapter(householdListSample)
+        binding.rvSidetabHousehold.layoutManager = LinearLayoutManager(this)
+        binding.rvSidetabHousehold.adapter = householdAdapter
+
+        dimView = View(this).apply {
+            setBackgroundColor(Color.parseColor("#80000000"))
+            visibility = View.GONE
+            isClickable = true
+            setOnClickListener { hideSideTab() }
+        }
+
+        rootLayout.addView(dimView, ConstraintLayout.LayoutParams(
+            ConstraintLayout.LayoutParams.MATCH_PARENT,
+            ConstraintLayout.LayoutParams.MATCH_PARENT
+        ))
+        dimView.bringToFront()
+
+        val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            private val SWIPE_THRESHOLD = 100
+            private val SWIPE_VELOCITY_THRESHOLD = 100
+
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+                if (e1 == null) return false
+                val diffX = e2.x - e1.x
+                val diffY = e2.y - e1.y
+
+                if (Math.abs(diffX) > Math.abs(diffY)) {
+                    if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffX > 0 && !isSideTabOpen) showSideTab()
+                        else if (diffX < 0 && isSideTabOpen) hideSideTab()
+                        return true
+                    }
+                }
+                return false
+            }
+        })
+
+        rootLayout.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            true
+        }
+
+        binding.dashboardPage.setOnClickListener {
+            if (isSideTabOpen) hideSideTab()
+        }
+    }
+
+    private fun showSideTab() {
+        dimView.visibility = View.VISIBLE
+        dimView.alpha = 0f
+        dimView.animate().alpha(1f).setDuration(300).start()
+
+        sideTab.bringToFront()
+        dimView.bringToFront()
+        sideTab.visibility = View.VISIBLE
+        sideTab.animate().translationX(0f).setDuration(300).start()
+
+        isSideTabOpen = true
+    }
+
+    private fun hideSideTab() {
+        dimView.animate().alpha(0f).setDuration(300).withEndAction {
+            dimView.visibility = View.GONE
+        }.start()
+
+        sideTab.animate().translationX(-sideTab.width.toFloat()).setDuration(300)
+            .withEndAction { sideTab.visibility = View.GONE }.start()
+
+        isSideTabOpen = false
     }
 
     private fun setupRecyclerViews() {
