@@ -3,18 +3,15 @@ package com.mobdeve.s18.group10.group10_mco2
 import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutBottomNoteDetailBinding
 import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutDashboardPageBinding
+import com.mobdeve.s18.group10.group10_mco2.utils.showChoreBottomSheet
 import com.mobdeve.s18.group10.group10_mco2.utils.showNoteBottomSheet
 
 class DashboardActivity : AppCompatActivity() {
@@ -31,19 +28,19 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     val choreListSample = listOf(
-        Chore("Clean Bathroom", "Oct 17, 2025", "Weekly", "Hanielle", false),
-        Chore("Change Bed Sheets", "Oct 18, 2025", "Monthly", "Hanielle", false),
-        Chore("Wash Dishes", "Oct 18, 2025", "Never", "Hanielle", false),
-        Chore("Take Out Trash", "Oct 20, 2025", "Daily", "Hanielle", false),
+        Chore("Clean Bathroom", "Oct 17, 2025", "Weekly", listOf("Hanielle"), false),
+        Chore("Change Bed Sheets", "Oct 18, 2025", "Monthly", listOf("Hanielle", "Hep"), false),
+        Chore("Wash Dishes", "Oct 18, 2025", "Never", listOf("Kelsey"), false),
+        Chore("Take Out Trash", "Oct 20, 2025", "Daily", listOf("Hanielle", "Hep", "Kelsey"), false),
     )
 
     val noteListSample = arrayListOf(
         Note("No staying up past midnight", "Don't stay up. Please."),
         Note("There's a spider in the room", "Please deal with it."),
-        Note("Stay Hydrated!", "Please deal with it."),
-        Note("Turn off lights not in use", "Please deal with it."),
-        Note("Replace wallpaper", "Please deal with it."),
-        Note("Throw away tangerine peels", "Please deal with it.")
+        Note("Stay Hydrated!", "Drink water regularly"),
+        Note("Turn off lights not in use", "Save electricity"),
+        Note("Replace wallpaper", "Living room needs new look"),
+        Note("Throw away tangerine peels", "In the kitchen")
     )
 
     val housemateListSample = listOf(
@@ -61,9 +58,7 @@ class DashboardActivity : AppCompatActivity() {
         setupRecyclerViews()
         setupTabListeners()
         setupButtonListeners()
-
-        // TODO: we need to create a function that actually computes this
-        binding.circularProgress.progress = 64
+        updateChoreProgress()
 
         showTab(Tab.CHORES, animate = false)
     }
@@ -72,6 +67,15 @@ class DashboardActivity : AppCompatActivity() {
         choreAdapter = ChoreAdapter(choreListSample)
         binding.dashboardChoreRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.dashboardChoreRecyclerView.adapter = choreAdapter
+
+        choreAdapter.setOnChoreClickListener { chore ->
+            val housemateNames = housemateListSample.map { it.name }
+            showChoreBottomSheet(
+                context = this,
+                availableHousemates = housemateNames,
+                chore = chore
+            )
+        }
 
         noteAdapter = NoteAdapter(noteListSample)
         binding.dashboardNotesRecyclerView.layoutManager = GridLayoutManager(this, 3)
@@ -104,7 +108,12 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun setupButtonListeners() {
         binding.buttonNewChore.setOnClickListener {
-            // TODO: setup
+            val housemateNames = housemateListSample.map { it.name }
+            showChoreBottomSheet(
+                context = this,
+                availableHousemates = housemateNames,
+                chore = null
+            )
         }
 
         binding.buttonViewAllChores.setOnClickListener {
@@ -129,6 +138,29 @@ class DashboardActivity : AppCompatActivity() {
             val inviteIntent = Intent(this, InviteActivity::class.java)
             startActivity(inviteIntent)
         }
+    }
+
+    private fun updateChoreProgress() {
+        val completedChores = choreListSample.count { it.isCompleted }
+        val totalChores = choreListSample.size
+        val progressPercentage = if (totalChores > 0) {
+            (completedChores.toFloat() / totalChores.toFloat() * 100).toInt()
+        } else {
+            0
+        }
+
+        binding.circularProgress.progress = progressPercentage
+
+        binding.percentageDashboardProgress.text = "$progressPercentage%"
+
+        val message = when {
+            progressPercentage == 100 -> "You've completed all your chores!"
+            progressPercentage >= 75 -> "Almost there! Keep it up!"
+            progressPercentage >= 50 -> "You're halfway through your chores!"
+            progressPercentage > 0 -> "You have completed $progressPercentage% of your chores!"
+            else -> "Let's get started on those chores!"
+        }
+        binding.dashboardPercentText.text = message
     }
 
     private fun showTab(tab: Tab, animate: Boolean = true) {

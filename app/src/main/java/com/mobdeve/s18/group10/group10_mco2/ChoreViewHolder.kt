@@ -1,34 +1,23 @@
 package com.mobdeve.s18.group10.group10_mco2
 
 import android.view.View
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Typeface
-import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.RecyclerView
-import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutChorePageBinding
-import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutItemChoreBinding
 import androidx.core.graphics.toColorInt
+import androidx.recyclerview.widget.RecyclerView
+import com.mobdeve.s18.group10.group10_mco2.databinding.LayoutItemChoreBinding
 
 class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerView.ViewHolder(binding.root) {
 
-    fun bindData(chore: Chore, adapter: ChoreAdapter) {
-        val context = binding.root.context
-
-        // Set title and due date
+    fun bindData(chore: Chore, adapter: ChoreAdapter, onChoreClickListener: ((Chore) -> Unit)?) {
         binding.choreItemName.text = chore.title
         binding.choreItemDueDate.text = chore.dueDate
 
+        // Update UI based on completion status
         if (chore.isCompleted) {
-            /*binding.choreItemName.paintFlags =
-                binding.choreItemName.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG*/
             binding.choreItemStrikethrough.visibility = View.VISIBLE
             binding.choreItemName.setTextColor("#B2133C3D".toColorInt())
             binding.choreItemDueDate.visibility = View.GONE
             binding.buttonChoreItem.setImageResource(R.drawable.checkmark_true)
         } else {
-            /*binding.choreItemName.paintFlags =
-                binding.choreItemName.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()*/
             binding.choreItemStrikethrough.visibility = View.GONE
             binding.choreItemName.setTextColor("#000000".toColorInt())
             binding.choreItemDueDate.visibility = View.VISIBLE
@@ -38,6 +27,10 @@ class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerVie
         binding.buttonChoreItem.setOnClickListener {
             chore.isCompleted = !chore.isCompleted
             adapter.notifyItemChanged(bindingAdapterPosition)
+        }
+
+        binding.root.setOnClickListener {
+            onChoreClickListener?.invoke(chore)
         }
     }
 }
