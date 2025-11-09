@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Group 10 - MCO2"
+rootProject.name = "Kasama"
 include(":app")
  

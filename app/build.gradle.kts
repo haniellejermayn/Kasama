@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.mobdeve.s18.group10.group10_mco2"
+    namespace = "com.mobicom.s18.kasama"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.mobdeve.s18.group10.group10_mco2"
+        applicationId = "com.mobdeve.s18.kasama"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
