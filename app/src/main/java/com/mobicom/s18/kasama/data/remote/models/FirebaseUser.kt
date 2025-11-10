@@ -1,6 +1,6 @@
 package com.mobicom.s18.kasama.data.remote.models
 
-import com.mobicom.s18.kasama.data.local.entities.User as UserEntity
+import com.mobicom.s18.kasama.data.local.entities.User
 
 data class FirebaseUser(
     val uid: String = "",
@@ -16,8 +16,8 @@ data class FirebaseUser(
     constructor() : this("", "", "")
 
     // convert to room entity
-    fun toEntity(): UserEntity {
-        return UserEntity(
+    fun toEntity(): User {
+        return User(
             uid = uid,
             email = email,
             displayName = displayName,

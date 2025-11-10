@@ -6,6 +6,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
 import com.mobicom.s18.kasama.data.repository.AuthRepository
+import com.mobicom.s18.kasama.data.repository.HouseholdRepository
+import com.mobicom.s18.kasama.data.repository.UserRepository
 
 class KasamaApplication : Application() {
 
@@ -24,6 +26,14 @@ class KasamaApplication : Application() {
 
     val authRepository: AuthRepository by lazy {
         AuthRepository(firebaseAuth, firestore, database)
+    }
+
+    val userRepository: UserRepository by lazy {
+        UserRepository(firestore, database)
+    }
+
+    val householdRepository: HouseholdRepository by lazy {
+        HouseholdRepository(firestore, database)
     }
 
     override fun onCreate() {
