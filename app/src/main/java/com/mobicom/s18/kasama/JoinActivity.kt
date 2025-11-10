@@ -39,12 +39,10 @@ class JoinActivity : AppCompatActivity() {
     private fun handleJoinHousehold() {
         val inviteCode = viewBinding.householdNameEtv.text.toString().trim().uppercase()
 
-        // Validation
         if (inviteCode.isEmpty()) {
             Toast.makeText(this, "Please enter an invite code", Toast.LENGTH_SHORT).show()
             return
         }
-
         if (inviteCode.length != 6) {
             Toast.makeText(this, "Invite code must be 6 characters", Toast.LENGTH_SHORT).show()
             return
@@ -59,15 +57,12 @@ class JoinActivity : AppCompatActivity() {
         viewBinding.joinBtn.isEnabled = false
 
         lifecycleScope.launch {
-            // First, get household info to show in confirmation
             val householdResult = householdRepository.getHouseholdByInviteCode(inviteCode)
 
             householdResult.onSuccess { household ->
-                // Get creator's name
                 val creatorResult = userRepository.getUserById(household.createdBy)
 
                 creatorResult.onSuccess { creator ->
-                    // Go to confirmation page
                     val joinConfirmIntent = Intent(this@JoinActivity, JoinConfirmActivity::class.java)
                     joinConfirmIntent.putExtra("HOUSEHOLD_ID", household.id)
                     joinConfirmIntent.putExtra("HOUSEHOLD_NAME", household.name)
@@ -79,7 +74,6 @@ class JoinActivity : AppCompatActivity() {
                 }
 
                 creatorResult.onFailure {
-                    // Still go to confirmation even if we can't get creator name
                     val joinConfirmIntent = Intent(this@JoinActivity, JoinConfirmActivity::class.java)
                     joinConfirmIntent.putExtra("HOUSEHOLD_ID", household.id)
                     joinConfirmIntent.putExtra("HOUSEHOLD_NAME", household.name)
