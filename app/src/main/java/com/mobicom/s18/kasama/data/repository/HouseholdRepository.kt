@@ -19,7 +19,8 @@ class HouseholdRepository(
             code = (1..6)
                 .map { chars.random() }
                 .joinToString("")
-        } while (database.householdDao().getHouseholdByInviteCode(code) != null)
+            val existing = getHouseholdByInviteCode(code)
+        } while (existing.isSuccess)
 
         return code
     }
@@ -131,6 +132,27 @@ class HouseholdRepository(
                 .get()
                 .await()
 
+            val household = doc.toObject(FirebaseHousehold::class.java)
+                ?: throw Exception("Household not found")
+
+            Result.success(household)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getHouseholdByInviteCode(inviteCode: String): Result<FirebaseHousehold> {
+        return try {
+            val querySnapshot = firestore.collection("households")
+                .whereEqualTo("inviteCode", inviteCode)
+                .get()
+                .await()
+
+            if (querySnapshot.isEmpty) {
+                throw Exception("Invalid invite code")
+            }
+
+            val doc = querySnapshot.documents.first()
             val household = doc.toObject(FirebaseHousehold::class.java)
                 ?: throw Exception("Household not found")
 
