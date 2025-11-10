@@ -77,6 +77,9 @@ dependencies {
     ksp("androidx.room:room-compiler:$room_version")
     implementation("androidx.room:room-ktx:${room_version}")
 
+    // gson
+    implementation("com.google.code.gson:gson:2.13.2")
+
     // workmanager
     val work_version = "2.11.0"
     implementation("androidx.work:work-runtime-ktx:${work_version}")
