@@ -11,5 +11,6 @@ data class User(
     val profilePictureUrl: String? = null,
     val birthdate: Long? = null,
     val phoneNumber: String? = null,
+    val householdId: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )

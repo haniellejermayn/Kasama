@@ -24,6 +24,7 @@ data class FirebaseUser(
             profilePictureUrl = profilePictureUrl,
             birthdate = birthdate,
             phoneNumber = phoneNumber,
+            householdId = householdId,
             createdAt = createdAt
         )
     }
