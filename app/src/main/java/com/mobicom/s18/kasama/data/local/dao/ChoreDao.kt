@@ -12,6 +12,9 @@ interface ChoreDao {
     @Update
     suspend fun update(chore: Chore)
 
+    @Query("SELECT * FROM chores where id = :choreId")
+    suspend fun getChoreByIdOnce(choreId: String): Chore?
+
     @Query("SELECT * FROM chores WHERE householdId = :householdId ORDER BY dueDate ASC")
     fun getChoresByHousehold(householdId: String): Flow<List<Chore>>
 

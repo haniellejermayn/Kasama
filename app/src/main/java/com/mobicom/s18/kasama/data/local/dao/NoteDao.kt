@@ -12,6 +12,9 @@ interface NoteDao {
     @Update
     suspend fun update(note: Note)
 
+    @Query("SELECT * FROM notes WHERE id = :noteId")
+    suspend fun getNoteByIdOnce(noteId: String): Note?
+
     @Query("SELECT * FROM notes WHERE householdId = :householdId ORDER BY createdAt DESC")
     fun getNotesByHousehold(householdId: String): Flow<List<Note>>
 
