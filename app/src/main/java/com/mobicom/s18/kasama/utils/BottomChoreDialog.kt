@@ -12,16 +12,16 @@ import android.widget.Toast
 import androidx.appcompat.view.ContextThemeWrapper
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
-import com.mobicom.s18.kasama.Chore
 import com.mobicom.s18.kasama.databinding.LayoutBottomChoreDetailBinding
+import com.mobicom.s18.kasama.models.ChoreUI
 import java.text.SimpleDateFormat
 import java.util.*
 
 fun showChoreBottomSheet(
     context: Context,
     availableHousemates: List<String>,
-    chore: Chore? = null,
-    onSave: (Chore) -> Unit = {}
+    chore: ChoreUI? = null,
+    onSave: (ChoreUI) -> Unit = {}
 ) {
     val bottomSheet = BottomSheetDialog(context)
     bottomSheet.behavior.isFitToContents = true
@@ -34,7 +34,7 @@ fun showChoreBottomSheet(
         binding.editTextChoreTitle.setText(it.title)
         binding.textDueDate.text = it.dueDate
 
-        it.assignedToList.forEach { assignee ->
+        it.assignedToNames.forEach { assignee ->
             selectedAssignees.add(assignee)
             addChipToGroup(binding, assignee, selectedAssignees, context)
         }
@@ -105,22 +105,14 @@ fun showChoreBottomSheet(
             }
             else -> {
                 // Create or update chore
-                val savedChore = if (chore == null) {
-                    Chore(
-                        title = title,
-                        dueDate = dueDate,
-                        frequency = repeats,
-                        assignedToList = selectedAssignees,
-                        isCompleted = false
-                    )
-                } else {
-                    chore.apply {
-                        this.title = title
-                        this.dueDate = dueDate
-                        this.frequency = repeats
-                        this.assignedToList = selectedAssignees
-                    }
-                }
+                val savedChore = ChoreUI(
+                    id = chore?.id ?: UUID.randomUUID().toString(),
+                    title = title,
+                    dueDate = dueDate,
+                    frequency = repeats,
+                    assignedToNames = selectedAssignees,
+                    isCompleted = chore?.isCompleted ?: false
+                )
 
                 // Call the callback with the saved chore
                 onSave(savedChore)

@@ -6,13 +6,13 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.widget.Toast
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.mobicom.s18.kasama.Note
 import com.mobicom.s18.kasama.databinding.LayoutBottomNoteDetailBinding
+import com.mobicom.s18.kasama.models.NoteUI
 import android.view.View
 
 fun showNoteBottomSheet(
     context: Context,
-    note: Note? = null,
+    note: NoteUI? = null,
     onSave: (title: String, content: String) -> Unit
 ) {
     val bottomSheet = BottomSheetDialog(context)

@@ -4,10 +4,16 @@ import android.view.View
 import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.RecyclerView
 import com.mobicom.s18.kasama.databinding.LayoutItemChoreBinding
+import com.mobicom.s18.kasama.models.ChoreUI
 
 class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerView.ViewHolder(binding.root) {
 
-    fun bindData(chore: Chore, adapter: ChoreAdapter, onChoreClickListener: ((Chore) -> Unit)?, onChoreCompletedListener: (() -> Unit)? = null) {
+    fun bindData(
+        chore: ChoreUI,
+        adapter: ChoreAdapter,
+        onChoreClickListener: ((ChoreUI) -> Unit)?,
+        onChoreCompletedListener: ((ChoreUI) -> Unit)? = null
+    ) {
         binding.choreItemName.text = chore.title
         binding.choreItemDueDate.text = chore.dueDate
 
@@ -27,7 +33,7 @@ class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerVie
         binding.buttonChoreItem.setOnClickListener {
             chore.isCompleted = !chore.isCompleted
             adapter.notifyItemChanged(bindingAdapterPosition)
-            onChoreCompletedListener?.invoke()
+            onChoreCompletedListener?.invoke(chore)
         }
 
         binding.root.setOnClickListener {

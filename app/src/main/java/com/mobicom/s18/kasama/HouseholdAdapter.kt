@@ -1,28 +1,14 @@
 package com.mobicom.s18.kasama
 
-import android.view.LayoutInflater
-import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView.Adapter
+import android.view.View
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.mobicom.s18.kasama.models.HouseholdUI
 
-class HouseholdAdapter(private val household: ArrayList<Household>): Adapter<HouseholdViewHolder>() {
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): HouseholdViewHolder {
-        val inflater = LayoutInflater.from(parent.context)
-        val view = inflater.inflate(R.layout.layout_item_household, parent, false)
+class HouseholdViewHolder(itemView: View) : ViewHolder(itemView) {
+    private val name: TextView = itemView.findViewById(R.id.text_household_name)
 
-        return HouseholdViewHolder(view)
-    }
-
-    override fun onBindViewHolder(
-        holder: HouseholdViewHolder,
-        position: Int
-    ) {
-        holder.bindHouseholdData(household.get(position))
-    }
-
-    override fun getItemCount(): Int {
-        return household.size
+    fun bindHouseholdData(household: HouseholdUI) {
+        name.text = household.name
     }
 }
