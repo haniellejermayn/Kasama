@@ -9,9 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import androidx.appcompat.view.ContextThemeWrapper
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.chip.Chip
 import com.mobicom.s18.kasama.databinding.LayoutBottomChoreDetailBinding
 import com.mobicom.s18.kasama.models.ChoreUI
 import java.text.SimpleDateFormat
@@ -27,16 +25,19 @@ fun showChoreBottomSheet(
     bottomSheet.behavior.isFitToContents = true
     val binding = LayoutBottomChoreDetailBinding.inflate(LayoutInflater.from(context))
 
-    val selectedAssignees = mutableListOf<String>()
+    // CHANGED: Single assignee instead of list
+    var selectedAssignee: String? = null
 
     // Pre-fill if editing
     chore?.let {
         binding.editTextChoreTitle.setText(it.title)
         binding.textDueDate.text = it.dueDate
 
-        it.assignedToNames.forEach { assignee ->
-            selectedAssignees.add(assignee)
-            addChipToGroup(binding, assignee, selectedAssignees, context)
+        // CHANGED: Get first assignee (single assignment)
+        if (it.assignedToNames.isNotEmpty()) {
+            selectedAssignee = it.assignedToNames[0]
+            binding.textAssignedPerson.text = selectedAssignee
+            binding.textAssignedPerson.setTextColor(Color.BLACK)
         }
     }
 
@@ -72,15 +73,16 @@ fun showChoreBottomSheet(
         ).show()
     }
 
-    binding.chipAddAssignee.setOnClickListener {
-        showHousemateSelectionDialog(context, availableHousemates, selectedAssignees) { selected ->
-            binding.chipGroupAssigned.removeAllViews()
-            selectedAssignees.clear()
-            selectedAssignees.addAll(selected)
-
-            selected.forEach { housemate ->
-                addChipToGroup(binding, housemate, selectedAssignees, context)
-            }
+    // CHANGED: Single selection dialog instead of multi-select
+    binding.textAssignedPerson.setOnClickListener {
+        showSingleHousemateSelectionDialog(
+            context,
+            availableHousemates,
+            selectedAssignee
+        ) { selected ->
+            selectedAssignee = selected
+            binding.textAssignedPerson.text = selected
+            binding.textAssignedPerson.setTextColor(Color.BLACK)
         }
     }
 
@@ -97,26 +99,24 @@ fun showChoreBottomSheet(
             title.isEmpty() -> {
                 Toast.makeText(context, "Please enter a chore title", Toast.LENGTH_SHORT).show()
             }
-            selectedAssignees.isEmpty() -> {
-                Toast.makeText(context, "Please assign to at least one person", Toast.LENGTH_SHORT).show()
+            selectedAssignee == null -> {
+                Toast.makeText(context, "Please assign to a person", Toast.LENGTH_SHORT).show()
             }
             dueDate.isBlank() -> {
                 Toast.makeText(context, "Please select a due date", Toast.LENGTH_SHORT).show()
             }
             else -> {
-                // Create or update chore
+                // CHANGED: Single assignee in list
                 val savedChore = ChoreUI(
                     id = chore?.id ?: UUID.randomUUID().toString(),
                     title = title,
                     dueDate = dueDate,
                     frequency = repeats,
-                    assignedToNames = selectedAssignees,
+                    assignedToNames = listOf(selectedAssignee!!),
                     isCompleted = chore?.isCompleted ?: false
                 )
 
-                // Call the callback with the saved chore
                 onSave(savedChore)
-
                 val action = if (chore == null) "Created" else "Updated"
                 Toast.makeText(context, "$action: $title", Toast.LENGTH_SHORT).show()
                 bottomSheet.dismiss()
@@ -126,14 +126,11 @@ fun showChoreBottomSheet(
 
     bottomSheet.window?.setBackgroundDrawableResource(R.color.transparent)
     bottomSheet.setContentView(binding.root)
-    bottomSheet.setOnShowListener {
-        val bottomSheetView =
-            bottomSheet.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-        bottomSheetView?.setBackgroundColor(Color.TRANSPARENT)
-    }
     bottomSheet.show()
 }
 
+// COMMENTED OUT: Multi-selection chip functions
+/*
 private fun addChipToGroup(
     binding: LayoutBottomChoreDetailBinding,
     assignee: String,
@@ -141,7 +138,6 @@ private fun addChipToGroup(
     context: Context
 ) {
     val themedContext = ContextThemeWrapper(context, com.google.android.material.R.style.Theme_MaterialComponents)
-
     val chip = Chip(themedContext).apply {
         text = assignee
         isCloseIconVisible = true
@@ -180,6 +176,35 @@ private fun showHousemateSelectionDialog(
         }
         .setPositiveButton("OK") { _, _ ->
             onSelected(selectedItems)
+        }
+        .setNegativeButton("Cancel") { dialog, _ ->
+            dialog.dismiss()
+        }
+        .show()
+}
+*/
+
+// NEW: Single selection dialog
+private fun showSingleHousemateSelectionDialog(
+    context: Context,
+    availableHousemates: List<String>,
+    currentSelected: String?,
+    onSelected: (String) -> Unit
+) {
+    val currentIndex = if (currentSelected != null) {
+        availableHousemates.indexOf(currentSelected)
+    } else {
+        -1
+    }
+
+    AlertDialog.Builder(context)
+        .setTitle("Assign to Housemate")
+        .setSingleChoiceItems(
+            availableHousemates.toTypedArray(),
+            currentIndex
+        ) { dialog, which ->
+            onSelected(availableHousemates[which])
+            dialog.dismiss()
         }
         .setNegativeButton("Cancel") { dialog, _ ->
             dialog.dismiss()
