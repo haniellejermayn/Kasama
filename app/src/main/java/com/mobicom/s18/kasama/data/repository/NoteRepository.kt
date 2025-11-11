@@ -3,7 +3,10 @@ package com.mobicom.s18.kasama.data.repository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
 import com.mobicom.s18.kasama.data.remote.models.FirebaseNote
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
@@ -11,6 +14,7 @@ class NoteRepository(
     private val firestore: FirebaseFirestore,
     private val database: KasamaDatabase
 ) {
+
     suspend fun createNote(
         householdId: String,
         title: String,
@@ -28,16 +32,22 @@ class NoteRepository(
                 createdBy = createdBy
             )
 
-            // save to firestore
-            firestore.collection("households")
-                .document(householdId)
-                .collection("notes")
-                .document(noteId)
-                .set(note)
-                .await()
-
-            // save to room
+            // OFFLINE-FIRST: Save to Room first
             database.noteDao().insert(note.toEntity())
+
+            // Then sync to Firebase (background)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    firestore.collection("households")
+                        .document(householdId)
+                        .collection("notes")
+                        .document(noteId)
+                        .set(note)
+                        .await()
+                } catch (e: Exception) {
+                    println("Failed to sync note to Firebase: ${e.message}")
+                }
+            }
 
             Result.success(note)
         } catch (e: Exception) {
@@ -47,20 +57,22 @@ class NoteRepository(
 
     suspend fun deleteNote(householdId: String, noteId: String): Result<Unit> {
         return try {
-            // delete from firestore
-            firestore.collection("households")
-                .document(householdId)
-                .collection("notes")
-                .document(noteId)
-                .delete()
-                .await()
-
-            // delete from room
+            // OFFLINE-FIRST: Delete from Room first
             val note = database.noteDao().getNoteByIdOnce(noteId)
-            if (note != null) {
-                database.noteDao().delete(note)
-            } else {
-                throw Exception("Note not found")
+            note?.let { database.noteDao().delete(it) }
+
+            // Then sync to Firebase (background)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    firestore.collection("households")
+                        .document(householdId)
+                        .collection("notes")
+                        .document(noteId)
+                        .delete()
+                        .await()
+                } catch (e: Exception) {
+                    println("Failed to sync note deletion to Firebase: ${e.message}")
+                }
             }
 
             Result.success(Unit)
@@ -82,12 +94,11 @@ class NoteRepository(
                 .await()
 
             val notes = snapshot.toObjects(FirebaseNote::class.java)
-
             notes.forEach { note ->
                 database.noteDao().insert(note.toEntity())
             }
         } catch (e: Exception) {
-            println(e.message)
+            println("Failed to sync notes from Firebase: ${e.message}")
         }
     }
 }

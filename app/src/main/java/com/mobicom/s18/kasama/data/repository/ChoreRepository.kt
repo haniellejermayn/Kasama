@@ -3,7 +3,10 @@ package com.mobicom.s18.kasama.data.repository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
 import com.mobicom.s18.kasama.data.remote.models.FirebaseChore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
@@ -34,16 +37,23 @@ class ChoreRepository(
                 isCompleted = false
             )
 
-            // save to firestore
-            firestore.collection("households")
-                .document(householdId)
-                .collection("chores")
-                .document(choreId)
-                .set(chore)
-                .await()
-
-            // save to room
+            // OFFLINE-FIRST: Save to Room first (immediate)
             database.choreDao().insert(chore.toEntity())
+
+            // Then sync to Firebase (background)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    firestore.collection("households")
+                        .document(householdId)
+                        .collection("chores")
+                        .document(choreId)
+                        .set(chore)
+                        .await()
+                } catch (e: Exception) {
+                    // Log error but don't fail - will sync later
+                    println("Failed to sync chore to Firebase: ${e.message}")
+                }
+            }
 
             Result.success(chore)
         } catch (e: Exception) {
@@ -53,16 +63,22 @@ class ChoreRepository(
 
     suspend fun updateChore(chore: FirebaseChore): Result<Unit> {
         return try {
-            // update firestore
-            firestore.collection("households")
-                .document(chore.householdId)
-                .collection("chores")
-                .document(chore.id)
-                .set(chore)
-                .await()
-
-            // update room
+            // OFFLINE-FIRST: Update Room first
             database.choreDao().update(chore.toEntity())
+
+            // Then sync to Firebase (background)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    firestore.collection("households")
+                        .document(chore.householdId)
+                        .collection("chores")
+                        .document(chore.id)
+                        .set(chore)
+                        .await()
+                } catch (e: Exception) {
+                    println("Failed to sync chore update to Firebase: ${e.message}")
+                }
+            }
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -72,20 +88,22 @@ class ChoreRepository(
 
     suspend fun deleteChore(householdId: String, choreId: String): Result<Unit> {
         return try {
-            // delete from Firestore
-            firestore.collection("households")
-                .document(householdId)
-                .collection("chores")
-                .document(choreId)
-                .delete()
-                .await()
-
-            // delete from room
+            // OFFLINE-FIRST: Delete from Room first
             val chore = database.choreDao().getChoreByIdOnce(choreId)
-            if (chore != null) {
-                database.choreDao().delete(chore)
-            } else {
-                throw Exception("Chore not found")
+            chore?.let { database.choreDao().delete(it) }
+
+            // Then sync to Firebase (background)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    firestore.collection("households")
+                        .document(householdId)
+                        .collection("chores")
+                        .document(choreId)
+                        .delete()
+                        .await()
+                } catch (e: Exception) {
+                    println("Failed to sync chore deletion to Firebase: ${e.message}")
+                }
             }
 
             Result.success(Unit)
@@ -107,12 +125,11 @@ class ChoreRepository(
                 .await()
 
             val chores = snapshot.toObjects(FirebaseChore::class.java)
-
             chores.forEach { chore ->
                 database.choreDao().insert(chore.toEntity())
             }
         } catch (e: Exception) {
-            println(e.message)
+            println("Failed to sync chores from Firebase: ${e.message}")
         }
     }
 }
