@@ -2,6 +2,10 @@ package com.mobicom.s18.kasama
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import com.mobicom.s18.kasama.KasamaApplication
+import kotlinx.coroutines.launch
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import com.mobicom.s18.kasama.models.NoteUI
 import com.mobicom.s18.kasama.utils.showNoteBottomSheet
@@ -18,9 +22,27 @@ class NoteAdapter(private val notes: MutableList<NoteUI>) : Adapter<NoteViewHold
         holder.bindNoteData(notes[position])
 
         holder.itemView.setOnClickListener {
-            showNoteBottomSheet(holder.itemView.context, notes[position]) { title, content ->
-                notes[position] = notes[position].copy(title = title, content = content)
-                notifyItemChanged(position)
+            val context = holder.itemView.context
+            val app = context.applicationContext as KasamaApplication
+            val currentUser = app.firebaseAuth.currentUser
+
+            if (currentUser != null && context is LifecycleOwner) {
+                context.lifecycleScope.launch {
+                    val userResult = app.userRepository.getUserById(currentUser.uid)
+                    val householdId = userResult.getOrNull()?.householdId
+
+                    if (householdId != null) {
+                        showNoteBottomSheet(
+                            context = context,
+                            householdId = householdId,
+                            currentUserId = currentUser.uid,
+                            note = notes[position],
+                            onSave = {
+                                // Note will be updated via Flow
+                            }
+                        )
+                    }
+                }
             }
         }
     }

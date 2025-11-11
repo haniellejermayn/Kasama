@@ -6,44 +6,65 @@ import android.app.DatePickerDialog
 import android.content.Context
 import android.graphics.Color
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.mobicom.s18.kasama.KasamaApplication
 import com.mobicom.s18.kasama.databinding.LayoutBottomChoreDetailBinding
 import com.mobicom.s18.kasama.models.ChoreUI
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
 fun showChoreBottomSheet(
     context: Context,
     availableHousemates: List<String>,
+    householdId: String,
+    currentUserId: String,
     chore: ChoreUI? = null,
-    onSave: (ChoreUI) -> Unit = {}
+    onSave: () -> Unit = {}
 ) {
     val bottomSheet = BottomSheetDialog(context)
     bottomSheet.behavior.isFitToContents = true
     val binding = LayoutBottomChoreDetailBinding.inflate(LayoutInflater.from(context))
 
-    // CHANGED: Single assignee instead of list
+    val app = (context.applicationContext as KasamaApplication)
     var selectedAssignee: String? = null
+    var selectedAssigneeId: String? = null
+    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH)
 
     // Pre-fill if editing
     chore?.let {
         binding.editTextChoreTitle.setText(it.title)
         binding.textDueDate.text = it.dueDate
 
-        // CHANGED: Get first assignee (single assignment)
         if (it.assignedToNames.isNotEmpty()) {
             selectedAssignee = it.assignedToNames[0]
             binding.textAssignedPerson.text = selectedAssignee
             binding.textAssignedPerson.setTextColor(Color.BLACK)
+
+            // Get the user ID for the assigned person
+            (context as? LifecycleOwner)?.lifecycleScope?.launch {
+                val household = app.householdRepository.getHouseholdById(householdId).getOrNull()
+                household?.memberIds?.forEach { userId ->
+                    val user = app.userRepository.getUserById(userId).getOrNull()
+                    if (user?.displayName == selectedAssignee) {
+                        selectedAssigneeId = userId
+                    }
+                }
+            }
         }
+
+        // Show delete button only when editing
+        binding.buttonDelete.visibility = android.view.View.VISIBLE
+    } ?: run {
+        binding.buttonDelete.visibility = android.view.View.GONE
     }
 
     if (chore == null) {
         val calendar = Calendar.getInstance()
-        val dateFormat = SimpleDateFormat("EEEE, MMMM dd", Locale.getDefault())
         binding.textDueDate.text = dateFormat.format(calendar.time)
     }
 
@@ -52,7 +73,6 @@ fun showChoreBottomSheet(
     adapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
     binding.spinnerRepeats.adapter = adapter
 
-    // Pre-fill if editing
     chore?.let {
         val position = repeatOptions.indexOf(it.frequency)
         if (position >= 0) binding.spinnerRepeats.setSelection(position)
@@ -64,7 +84,6 @@ fun showChoreBottomSheet(
             context,
             { _, year, month, dayOfMonth ->
                 calendar.set(year, month, dayOfMonth)
-                val dateFormat = SimpleDateFormat("EEEE, MMMM dd", Locale.getDefault())
                 binding.textDueDate.text = dateFormat.format(calendar.time)
             },
             calendar.get(Calendar.YEAR),
@@ -73,17 +92,52 @@ fun showChoreBottomSheet(
         ).show()
     }
 
-    // CHANGED: Single selection dialog instead of multi-select
     binding.textAssignedPerson.setOnClickListener {
-        showSingleHousemateSelectionDialog(
-            context,
-            availableHousemates,
-            selectedAssignee
-        ) { selected ->
-            selectedAssignee = selected
-            binding.textAssignedPerson.text = selected
-            binding.textAssignedPerson.setTextColor(Color.BLACK)
+        (context as? LifecycleOwner)?.lifecycleScope?.launch {
+            val household = app.householdRepository.getHouseholdById(householdId).getOrNull()
+            if (household != null) {
+                val housemateMap = mutableMapOf<String, String>() // name to id mapping
+                household.memberIds.forEach { userId ->
+                    val user = app.userRepository.getUserById(userId).getOrNull()
+                    if (user != null) {
+                        housemateMap[user.displayName] = userId
+                    }
+                }
+
+                showSingleHousemateSelectionDialog(
+                    context,
+                    housemateMap.keys.toList(),
+                    selectedAssignee
+                ) { selected ->
+                    selectedAssignee = selected
+                    selectedAssigneeId = housemateMap[selected]
+                    binding.textAssignedPerson.text = selected
+                    binding.textAssignedPerson.setTextColor(Color.BLACK)
+                }
+            }
         }
+    }
+
+    binding.buttonDelete.setOnClickListener {
+        AlertDialog.Builder(context)
+            .setTitle("Delete Chore")
+            .setMessage("Are you sure you want to delete this chore?")
+            .setPositiveButton("Delete") { _, _ ->
+                chore?.let { choreToDelete ->
+                    (context as? LifecycleOwner)?.lifecycleScope?.launch {
+                        val result = app.choreRepository.deleteChore(householdId, choreToDelete.id)
+                        if (result.isSuccess) {
+                            Toast.makeText(context, "Chore deleted", Toast.LENGTH_SHORT).show()
+                            onSave()
+                            bottomSheet.dismiss()
+                        } else {
+                            Toast.makeText(context, "Failed to delete chore", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     binding.buttonCancel.setOnClickListener {
@@ -92,34 +146,74 @@ fun showChoreBottomSheet(
 
     binding.buttonSave.setOnClickListener {
         val title = binding.editTextChoreTitle.text.toString().trim()
-        val dueDate = binding.textDueDate.text.toString()
+        val dueDateText = binding.textDueDate.text.toString()
         val repeats = binding.spinnerRepeats.selectedItem.toString()
 
         when {
             title.isEmpty() -> {
                 Toast.makeText(context, "Please enter a chore title", Toast.LENGTH_SHORT).show()
             }
-            selectedAssignee == null -> {
+            selectedAssigneeId == null -> {
                 Toast.makeText(context, "Please assign to a person", Toast.LENGTH_SHORT).show()
             }
-            dueDate.isBlank() -> {
+            dueDateText.isBlank() -> {
                 Toast.makeText(context, "Please select a due date", Toast.LENGTH_SHORT).show()
             }
             else -> {
-                // CHANGED: Single assignee in list
-                val savedChore = ChoreUI(
-                    id = chore?.id ?: UUID.randomUUID().toString(),
-                    title = title,
-                    dueDate = dueDate,
-                    frequency = repeats,
-                    assignedToNames = listOf(selectedAssignee!!),
-                    isCompleted = chore?.isCompleted ?: false
-                )
+                (context as? LifecycleOwner)?.lifecycleScope?.launch {
+                    try {
+                        val dueDate = dateFormat.parse(dueDateText)?.time ?: System.currentTimeMillis()
+                        val frequency = if (repeats == "Never") null else repeats.lowercase()
 
-                onSave(savedChore)
-                val action = if (chore == null) "Created" else "Updated"
-                Toast.makeText(context, "$action: $title", Toast.LENGTH_SHORT).show()
-                bottomSheet.dismiss()
+                        if (chore == null) {
+                            // Create new chore
+                            val result = app.choreRepository.createChore(
+                                householdId = householdId,
+                                title = title,
+                                dueDate = dueDate,
+                                assignedTo = selectedAssigneeId!!,
+                                frequency = frequency,
+                                createdBy = currentUserId
+                            )
+
+                            if (result.isSuccess) {
+                                Toast.makeText(context, "Chore created: $title", Toast.LENGTH_SHORT).show()
+                                onSave()
+                                bottomSheet.dismiss()
+                            } else {
+                                Toast.makeText(context, "Failed to create chore", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            // Update existing chore
+                            val choreEntity = app.database.choreDao().getChoreByIdOnce(chore.id)
+                            if (choreEntity != null) {
+                                val updatedChore = com.mobicom.s18.kasama.data.remote.models.FirebaseChore(
+                                    id = choreEntity.id,
+                                    householdId = choreEntity.householdId,
+                                    title = title,
+                                    dueDate = dueDate,
+                                    assignedTo = selectedAssigneeId!!,
+                                    isCompleted = choreEntity.isCompleted,
+                                    frequency = frequency,
+                                    createdBy = choreEntity.createdBy,
+                                    createdAt = choreEntity.createdAt,
+                                    completedAt = choreEntity.completedAt
+                                )
+
+                                val result = app.choreRepository.updateChore(updatedChore)
+                                if (result.isSuccess) {
+                                    Toast.makeText(context, "Chore updated: $title", Toast.LENGTH_SHORT).show()
+                                    onSave()
+                                    bottomSheet.dismiss()
+                                } else {
+                                    Toast.makeText(context, "Failed to update chore", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
     }
@@ -129,62 +223,6 @@ fun showChoreBottomSheet(
     bottomSheet.show()
 }
 
-// COMMENTED OUT: Multi-selection chip functions
-/*
-private fun addChipToGroup(
-    binding: LayoutBottomChoreDetailBinding,
-    assignee: String,
-    selectedAssignees: MutableList<String>,
-    context: Context
-) {
-    val themedContext = ContextThemeWrapper(context, com.google.android.material.R.style.Theme_MaterialComponents)
-    val chip = Chip(themedContext).apply {
-        text = assignee
-        isCloseIconVisible = true
-        setOnCloseIconClickListener {
-            selectedAssignees.remove(assignee)
-            binding.chipGroupAssigned.removeView(this)
-        }
-    }
-    binding.chipGroupAssigned.addView(chip)
-}
-
-private fun showHousemateSelectionDialog(
-    context: Context,
-    availableHousemates: List<String>,
-    currentSelected: List<String>,
-    onSelected: (List<String>) -> Unit
-) {
-    val selectedItems = currentSelected.toMutableList()
-    val checkedItems = BooleanArray(availableHousemates.size) { index ->
-        availableHousemates[index] in currentSelected
-    }
-
-    AlertDialog.Builder(context)
-        .setTitle("Assign to Housemates")
-        .setMultiChoiceItems(
-            availableHousemates.toTypedArray(),
-            checkedItems
-        ) { _, which, isChecked ->
-            if (isChecked) {
-                if (availableHousemates[which] !in selectedItems) {
-                    selectedItems.add(availableHousemates[which])
-                }
-            } else {
-                selectedItems.remove(availableHousemates[which])
-            }
-        }
-        .setPositiveButton("OK") { _, _ ->
-            onSelected(selectedItems)
-        }
-        .setNegativeButton("Cancel") { dialog, _ ->
-            dialog.dismiss()
-        }
-        .show()
-}
-*/
-
-// NEW: Single selection dialog
 private fun showSingleHousemateSelectionDialog(
     context: Context,
     availableHousemates: List<String>,

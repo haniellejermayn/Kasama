@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.mobicom.s18.kasama.databinding.LayoutItemHousemateBinding
 import com.mobicom.s18.kasama.models.HousemateUI
 
-class HousemateAdapter(private var housemateData: List<HousemateUI>) : RecyclerView.Adapter<HousemateViewHolder>() {
+class HousemateAdapter(private var housemates: List<HousemateUI>) : RecyclerView.Adapter<HousemateViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HousemateViewHolder {
         val binding = LayoutItemHousemateBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -14,13 +14,13 @@ class HousemateAdapter(private var housemateData: List<HousemateUI>) : RecyclerV
     }
 
     override fun onBindViewHolder(holder: HousemateViewHolder, position: Int) {
-        holder.bindData(housemateData[position])
+        holder.bindData(housemates[position])
     }
 
-    override fun getItemCount(): Int = housemateData.size
+    override fun getItemCount(): Int = housemates.size
 
     fun setHousemates(newHousemates: List<HousemateUI>) {
-        housemateData = newHousemates
+        housemates = newHousemates
         notifyDataSetChanged()
     }
 }

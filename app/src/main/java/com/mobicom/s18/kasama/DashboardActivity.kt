@@ -9,14 +9,18 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.mobicom.s18.kasama.databinding.LayoutDashboardPageBinding
 import com.mobicom.s18.kasama.utils.showChoreBottomSheet
 import com.mobicom.s18.kasama.utils.showNoteBottomSheet
+import com.mobicom.s18.kasama.viewmodels.DashboardViewModel
+import kotlinx.coroutines.launch
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -31,36 +35,23 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var dimView: View
     private lateinit var sideTab: ConstraintLayout
 
+    private val viewModel: DashboardViewModel by viewModels {
+        val app = application as KasamaApplication
+        DashboardViewModel.Factory(
+            app.choreRepository,
+            app.noteRepository,
+            app.userRepository,
+            app.householdRepository,
+            app.database
+        )
+    }
+
+    private var currentHouseholdId: String? = null
+    private var currentUserId: String? = null
+
     enum class Tab {
         CHORES, NOTES, HOUSEMATES
     }
-
-    val choreListSample = mutableListOf(
-        Chore("Clean Bathroom", "Oct 17, 2025", "Weekly", listOf("Hanielle"), false),
-        Chore("Change Bed Sheets", "Oct 18, 2025", "Monthly", listOf("Hanielle", "Hep"), false),
-        Chore("Wash Dishes", "Oct 18, 2025", "Never", listOf("Kelsey"), false),
-        Chore("Take Out Trash", "Oct 20, 2025", "Daily", listOf("Hanielle", "Hep", "Kelsey"), false),
-    )
-
-    val noteListSample = arrayListOf(
-        Note("No staying up past midnight", "Don't stay up. Please."),
-        Note("There's a spider in the room", "Please deal with it."),
-        Note("Stay Hydrated!", "Drink water regularly"),
-        Note("Turn off lights not in use", "Save electricity"),
-        Note("Replace wallpaper", "Living room needs new look"),
-        Note("Throw away tangerine peels", "In the kitchen")
-    )
-
-    val housemateListSample = listOf(
-        Housemate("Hanielle", 2, R.drawable.kasama_profile_default),
-        Housemate("Hep", 0, R.drawable.kasama_profile_default),
-        Housemate("Kelsey", 4, R.drawable.kasama_profile_default),
-    )
-
-    val householdListSample = arrayListOf(
-        Household("Dormies"),
-        Household("Home")
-    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,20 +62,115 @@ class DashboardActivity : AppCompatActivity() {
         setupRecyclerViews()
         setupTabListeners()
         setupButtonListeners()
-        updateChoreProgress()
+        observeViewModel()
+        loadUserData()
 
         showTab(Tab.CHORES, animate = false)
-
         setupSideTab()
+    }
+
+    private fun loadUserData() {
+        lifecycleScope.launch {
+            val app = application as KasamaApplication
+            val currentUser = app.firebaseAuth.currentUser
+            if (currentUser != null) {
+                currentUserId = currentUser.uid
+                val userResult = app.userRepository.getUserById(currentUser.uid)
+                if (userResult.isSuccess) {
+                    val user = userResult.getOrNull()
+                    currentHouseholdId = user?.householdId
+                    currentHouseholdId?.let { householdId ->
+                        viewModel.loadDashboardData(householdId)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun setupRecyclerViews() {
+        choreAdapter = ChoreAdapter(emptyList())
+        binding.dashboardChoreRecyclerView.layoutManager = LinearLayoutManager(this)
+        binding.dashboardChoreRecyclerView.adapter = choreAdapter
+
+        choreAdapter.setOnChoreClickListener { chore ->
+            lifecycleScope.launch {
+                val app = application as KasamaApplication
+                currentHouseholdId?.let { householdId ->
+                    val householdResult = app.householdRepository.getHouseholdById(householdId)
+                    if (householdResult.isSuccess) {
+                        val household = householdResult.getOrNull()
+                        val housemateNames = household?.memberIds?.mapNotNull { userId ->
+                            app.userRepository.getUserById(userId).getOrNull()?.displayName
+                        } ?: emptyList()
+
+                        showChoreBottomSheet(
+                            context = this@DashboardActivity,
+                            availableHousemates = housemateNames,
+                            householdId = householdId,
+                            currentUserId = currentUserId ?: "",
+                            chore = chore,
+                            onSave = {
+                                viewModel.loadDashboardData(householdId)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        choreAdapter.setOnChoreCompletedListener { chore ->
+            currentHouseholdId?.let { householdId ->
+                viewModel.toggleChoreCompletion(chore.id, householdId)
+            }
+        }
+
+        noteAdapter = NoteAdapter(mutableListOf())
+        binding.dashboardNotesRecyclerView.layoutManager = GridLayoutManager(this, 3)
+        binding.dashboardNotesRecyclerView.adapter = noteAdapter
+
+        housemateAdapter = HousemateAdapter(emptyList())
+        binding.dashboardHousemateRecyclerView.layoutManager = LinearLayoutManager(this)
+        binding.dashboardHousemateRecyclerView.adapter = housemateAdapter
+    }
+
+    private fun observeViewModel() {
+        lifecycleScope.launch {
+            viewModel.chores.collect { chores ->
+                choreAdapter.setChores(chores)
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.notes.collect { notes ->
+                noteAdapter = NoteAdapter(notes.toMutableList())
+                binding.dashboardNotesRecyclerView.adapter = noteAdapter
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.housemates.collect { housemates ->
+                housemateAdapter = HousemateAdapter(housemates)
+                binding.dashboardHousemateRecyclerView.adapter = housemateAdapter
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.progressData.collect { (percentage, message, progressText) ->
+                binding.circularProgress.progress = percentage
+                binding.percentageDashboardProgress.text = "$percentage%"
+                binding.dashboardPercentText.text = message
+            }
+        }
     }
 
     private fun setupSideTab() {
         val rootLayout = binding.dashboardPage
         sideTab = binding.sideTab
 
-        householdAdapter = HouseholdAdapter(householdListSample)
-        binding.rvSidetabHousehold.layoutManager = LinearLayoutManager(this)
-        binding.rvSidetabHousehold.adapter = householdAdapter
+        // TODO: Double check, but right now no need for multi-household support
+        // householdAdapter = HouseholdAdapter(arrayListOf())
+        // binding.rvSidetabHousehold.layoutManager = LinearLayoutManager(this)
+        // binding.rvSidetabHousehold.adapter = householdAdapter
 
         dimView = View(this).apply {
             setBackgroundColor(Color.parseColor("#80000000"))
@@ -154,33 +240,6 @@ class DashboardActivity : AppCompatActivity() {
         isSideTabOpen = false
     }
 
-    private fun setupRecyclerViews() {
-        choreAdapter = ChoreAdapter(choreListSample)
-        binding.dashboardChoreRecyclerView.layoutManager = LinearLayoutManager(this)
-        binding.dashboardChoreRecyclerView.adapter = choreAdapter
-
-        choreAdapter.setOnChoreClickListener { chore ->
-            val housemateNames = housemateListSample.map { it.name }
-            showChoreBottomSheet(
-                context = this,
-                availableHousemates = housemateNames,
-                chore = chore
-            )
-        }
-
-        choreAdapter.setOnChoreCompletedListener {
-            updateChoreProgress()
-        }
-
-        noteAdapter = NoteAdapter(noteListSample)
-        binding.dashboardNotesRecyclerView.layoutManager = GridLayoutManager(this, 3)
-        binding.dashboardNotesRecyclerView.adapter = noteAdapter
-
-        housemateAdapter = HousemateAdapter(housemateListSample)
-        binding.dashboardHousemateRecyclerView.layoutManager = LinearLayoutManager(this)
-        binding.dashboardHousemateRecyclerView.adapter = housemateAdapter
-    }
-
     private fun setupTabListeners() {
         binding.textOptionChores.setOnClickListener {
             if (currentTab != Tab.CHORES) {
@@ -203,17 +262,29 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun setupButtonListeners() {
         binding.buttonNewChore.setOnClickListener {
-            val housemateNames = housemateListSample.map { it.name }
-            showChoreBottomSheet(
-                context = this,
-                availableHousemates = housemateNames,
-                chore = null,
-                onSave = { newChore ->
-                    (choreListSample as? MutableList)?.add(newChore)
-                    choreAdapter.setChores(choreListSample)
-                    updateChoreProgress()
+            lifecycleScope.launch {
+                val app = application as KasamaApplication
+                currentHouseholdId?.let { householdId ->
+                    val householdResult = app.householdRepository.getHouseholdById(householdId)
+                    if (householdResult.isSuccess) {
+                        val household = householdResult.getOrNull()
+                        val housemateNames = household?.memberIds?.mapNotNull { userId ->
+                            app.userRepository.getUserById(userId).getOrNull()?.displayName
+                        } ?: emptyList()
+
+                        showChoreBottomSheet(
+                            context = this@DashboardActivity,
+                            availableHousemates = housemateNames,
+                            householdId = householdId,
+                            currentUserId = currentUserId ?: "",
+                            chore = null,
+                            onSave = {
+                                viewModel.loadDashboardData(householdId)
+                            }
+                        )
+                    }
                 }
-            )
+            }
         }
 
         binding.buttonViewAllChores.setOnClickListener {
@@ -227,10 +298,16 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         binding.buttonNewNote.setOnClickListener {
-            showNoteBottomSheet(this) { title, content ->
-                val newNote = Note(title, content)
-                noteListSample.add(newNote)
-                noteAdapter.notifyItemInserted(noteListSample.size - 1)
+            currentHouseholdId?.let { householdId ->
+                showNoteBottomSheet(
+                    context = this,
+                    householdId = householdId,
+                    currentUserId = currentUserId ?: "",
+                    note = null,
+                    onSave = {
+                        viewModel.loadDashboardData(householdId)
+                    }
+                )
             }
         }
 
@@ -240,32 +317,13 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         binding.logOut.setOnClickListener {
+            val app = application as KasamaApplication
+            app.authRepository.logOut()
             val loginIntent = Intent(this, LoginActivity::class.java)
+            loginIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(loginIntent)
+            finish()
         }
-    }
-
-    private fun updateChoreProgress() {
-        val completedChores = choreListSample.count { it.isCompleted }
-        val totalChores = choreListSample.size
-        val progressPercentage = if (totalChores > 0) {
-            (completedChores.toFloat() / totalChores.toFloat() * 100).toInt()
-        } else {
-            0
-        }
-
-        binding.circularProgress.progress = progressPercentage
-
-        binding.percentageDashboardProgress.text = "$progressPercentage%"
-
-        val message = when {
-            progressPercentage == 100 -> "You've completed all your chores!"
-            progressPercentage >= 75 -> "Almost there! Keep it up!"
-            progressPercentage >= 50 -> "You're halfway through your chores!"
-            progressPercentage > 0 -> "You have completed $progressPercentage% of your chores!"
-            else -> "Let's get started on those chores!"
-        }
-        binding.dashboardPercentText.text = message
     }
 
     private fun showTab(tab: Tab, animate: Boolean = true) {

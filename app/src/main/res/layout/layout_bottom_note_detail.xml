@@ -15,34 +15,15 @@
         app:layout_constraintTop_toTopOf="parent"
         android:background="@drawable/note_tab">
 
-        <Button
-            android:id="@+id/button_save"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_marginEnd="28dp"
-            android:layout_marginBottom="10dp"
-            android:background="@drawable/rounded_button_primary"
-            android:fontFamily="@font/open_sans"
-            android:text="Save"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <Button
-            android:id="@+id/button_cancel"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_marginStart="30dp"
-            android:layout_marginBottom="10dp"
-            android:background="@null"
-            android:fontFamily="@font/open_sans"
-            android:text="Cancel"
-            android:textAllCaps="false"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+        <ImageView
+            android:id="@+id/drag_bar"
+            android:layout_width="30dp"
+            android:layout_height="20dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/drag_bar"
+            tools:srcCompat="@drawable/drag_bar" />
 
         <EditText
             android:id="@+id/edit_text_title"
@@ -79,9 +60,7 @@
             android:orientation="vertical"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/edit_text_title">
-
-        </LinearLayout>
+            app:layout_constraintTop_toBottomOf="@+id/edit_text_title" />
 
         <EditText
             android:id="@+id/edit_text_content"
@@ -106,14 +85,50 @@
             app:layout_constraintTop_toBottomOf="@+id/bar"
             android:maxLength="200" />
 
-        <ImageView
-            android:id="@+id/drag_bar"
-            android:layout_width="30dp"
-            android:layout_height="20dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/drag_bar"
-            tools:srcCompat="@drawable/drag_bar" />
+        <!-- Buttons -->
+        <Button
+            android:id="@+id/button_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginStart="30dp"
+            android:layout_marginBottom="10dp"
+            android:background="@null"
+            android:fontFamily="@font/open_sans"
+            android:text="Cancel"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <Button
+            android:id="@+id/button_delete"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginBottom="10dp"
+            android:background="@null"
+            android:fontFamily="@font/open_sans"
+            android:text="Delete"
+            android:textAllCaps="false"
+            android:textColor="#D32F2F"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/button_save"
+            app:layout_constraintStart_toEndOf="@+id/button_cancel" />
+
+        <Button
+            android:id="@+id/button_save"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginEnd="28dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/rounded_button_primary"
+            android:fontFamily="@font/open_sans"
+            android:text="Save"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

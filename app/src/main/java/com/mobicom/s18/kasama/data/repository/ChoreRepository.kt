@@ -13,6 +13,7 @@ import java.util.UUID
 class ChoreRepository(
     private val firestore: FirebaseFirestore,
     private val database: KasamaDatabase
+
 ) {
 
     suspend fun createChore(

@@ -101,4 +101,29 @@ class NoteRepository(
             println("Failed to sync notes from Firebase: ${e.message}")
         }
     }
+
+    suspend fun updateNote(note: FirebaseNote): Result<Unit> {
+        return try {
+            // OFFLINE-FIRST: Update Room first
+            database.noteDao().update(note.toEntity())
+
+            // Then sync to Firebase (background)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    firestore.collection("households")
+                        .document(note.householdId)
+                        .collection("notes")
+                        .document(note.id)
+                        .set(note)
+                        .await()
+                } catch (e: Exception) {
+                    println("Failed to sync note update to Firebase: ${e.message}")
+                }
+            }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

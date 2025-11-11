@@ -5,45 +5,28 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.mobicom.s18.kasama.databinding.LayoutChorePageBinding
+import com.mobicom.s18.kasama.models.ChoreUI
 import com.mobicom.s18.kasama.utils.showChoreBottomSheet
-import java.text.SimpleDateFormat
-import java.util.*
+import com.mobicom.s18.kasama.viewmodels.ChoreViewModel
+import kotlinx.coroutines.launch
 
 class ChoreActivity : AppCompatActivity() {
 
     private lateinit var binding: LayoutChorePageBinding
     private lateinit var choreAdapter: ChoreAdapter
 
-    private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH)
+    private val viewModel: ChoreViewModel by viewModels {
+        val app = application as KasamaApplication
+        ChoreViewModel.Factory(app.choreRepository, app.userRepository, app.database)
+    }
 
-    val choreListSample = listOf(
-        Chore("Clean Bathroom", "Oct 17, 2025", "Daily", listOf("Hanielle"), false),
-        Chore("Change Bed Sheets", "Oct 18, 2025", "Weekly", listOf("Hanielle", "Hep"), false),
-        Chore("Wash Dishes", "Oct 18, 2025", "Daily", listOf("Kelsey"), true),
-        Chore("Take Out Trash", "Oct 20, 2025", "Daily", listOf("Hanielle", "Hep", "Kelsey"), false),
-        Chore("Vacuum Living Room", "Oct 20, 2025", "Weekly", listOf("Hep"), false),
-        Chore("Water Plants", "Oct 20, 2025", "Weekly", listOf("Kelsey", "Hanielle"), false),
-        Chore("Clean Kitchen", "Oct 20, 2025", "Monthly", listOf("Hanielle"), false),
-        Chore("Organize Pantry", "Oct 20, 2025", "Monthly", listOf("Hep", "Kelsey"), false),
-    )
-
-    val housemateListSample = listOf(
-        Housemate("Hanielle", 2, R.drawable.kasama_profile_default),
-        Housemate("Hep", 0, R.drawable.kasama_profile_default),
-        Housemate("Kelsey", 4, R.drawable.kasama_profile_default),
-    )
-
-    val totalDailyChores = 4
-    val completedDailyChores = 1
-
-    val totalWeeklyChores = 12
-    val completedWeeklyChores = 8
-
-    val totalMonthlyChores = 24
-    val completedMonthlyChores = 21
+    private var currentHouseholdId: String? = null
+    private var currentFrequency: String = "daily"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,114 +34,113 @@ class ChoreActivity : AppCompatActivity() {
         binding = LayoutChorePageBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        choreAdapter = ChoreAdapter(choreListSample)
-        binding.choreRecyclerView.layoutManager = LinearLayoutManager(this)
-        binding.choreRecyclerView.adapter = choreAdapter
-
-        choreAdapter.setOnChoreClickListener { chore ->
-            val housemateNames = housemateListSample.map { it.name }
-            showChoreBottomSheet(
-                context = this,
-                availableHousemates = housemateNames,
-                chore = chore
-            )
-        }
-
-        // Default to "Daily"
-        val dailyFiltered = filterChoresByType("daily", choreListSample)
-        choreAdapter.setChores(dailyFiltered)
-        highlightTab(binding.textOptionDailyChore)
-
-        // Update progress for daily
-        val progressPercent = (completedDailyChores * 100 / totalDailyChores)
-        binding.progressBar.progress = progressPercent
-        binding.progressCount.text = "$completedDailyChores / $totalDailyChores"
-
+        setupRecyclerView()
+        observeViewModel()
         setupFilterTabs()
+
+        loadUserHousehold()
     }
 
-    private fun setupFilterTabs() {
-        binding.textOptionDailyChore.setOnClickListener {
-            binding.textChoreDate.text = "Today"
-            val progressPercent = (completedDailyChores * 100 / totalDailyChores)
-            binding.progressBar.progress = progressPercent
-            binding.progressCount.text = "$completedDailyChores / $totalDailyChores"
-            choreAdapter.setChores(filterChoresByType("daily", choreListSample))
-            highlightTab(binding.textOptionDailyChore)
-        }
-
-        binding.textOptionWeeklyChore.setOnClickListener {
-            binding.textChoreDate.text = "This Week"
-            val progressPercent = (completedWeeklyChores * 100 / totalWeeklyChores)
-            binding.progressBar.progress = progressPercent
-            binding.progressCount.text = "$completedWeeklyChores / $totalWeeklyChores"
-            choreAdapter.setChores(filterChoresByType("weekly", choreListSample))
-            highlightTab(binding.textOptionWeeklyChore)
-        }
-
-        binding.textOptionMonthlyChore.setOnClickListener {
-            binding.textChoreDate.text = "This Month"
-            val progressPercent = (completedMonthlyChores * 100 / totalMonthlyChores)
-            binding.progressBar.progress = progressPercent
-            binding.progressCount.text = "$completedMonthlyChores / $totalMonthlyChores"
-            choreAdapter.setChores(filterChoresByType("monthly", choreListSample))
-            highlightTab(binding.textOptionMonthlyChore)
-        }
-    }
-
-    fun filterChoresByType(type: String, choreList: List<Chore>): List<Chore> {
-        val today = Calendar.getInstance()
-        today.set(Calendar.HOUR_OF_DAY, 0)
-        today.set(Calendar.MINUTE, 0)
-        today.set(Calendar.SECOND, 0)
-        today.set(Calendar.MILLISECOND, 0)
-
-        return choreList.filter { chore ->
-            try {
-                val dueDate = dateFormat.parse(chore.dueDate) ?: return@filter false
-                val dueCal = Calendar.getInstance().apply {
-                    time = dueDate
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
+    private fun loadUserHousehold() {
+        lifecycleScope.launch {
+            val app = application as KasamaApplication
+            val currentUser = app.firebaseAuth.currentUser
+            if (currentUser != null) {
+                val userResult = app.userRepository.getUserById(currentUser.uid)
+                if (userResult.isSuccess) {
+                    val user = userResult.getOrNull()
+                    currentHouseholdId = user?.householdId
+                    currentHouseholdId?.let { householdId ->
+                        viewModel.loadChoresByHousehold(householdId)
+                        updateDisplayedChores("daily")
+                    }
                 }
-
-                when (type.lowercase()) {
-                    "daily" -> isSameDay(today, dueCal)
-                    "weekly" -> isSameWeek(today, dueCal)
-                    "monthly" -> isSameMonth(today, dueCal)
-                    else -> false
-                }
-            } catch (e: Exception) {
-                false
             }
         }
     }
 
-    private fun isSameDay(c1: Calendar, c2: Calendar): Boolean {
-        return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR) &&
-                c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR)
+    private fun setupRecyclerView() {
+        choreAdapter = ChoreAdapter(emptyList())
+        binding.choreRecyclerView.layoutManager = LinearLayoutManager(this)
+        binding.choreRecyclerView.adapter = choreAdapter
+
+        choreAdapter.setOnChoreClickListener { chore ->
+            lifecycleScope.launch {
+                val app = application as KasamaApplication
+                currentHouseholdId?.let { householdId ->
+                    val householdResult = app.householdRepository.getHouseholdById(householdId)
+                    if (householdResult.isSuccess) {
+                        val household = householdResult.getOrNull()
+                        val housemateNames = household?.memberIds?.mapNotNull { userId ->
+                            app.userRepository.getUserById(userId).getOrNull()?.displayName
+                        } ?: emptyList()
+
+                        showChoreBottomSheet(
+                            context = this@ChoreActivity,
+                            availableHousemates = housemateNames,
+                            householdId = householdId,
+                            currentUserId = app.firebaseAuth.currentUser?.uid ?: "",
+                            chore = chore,
+                            onSave = {
+                                viewModel.loadChoresByHousehold(householdId)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        choreAdapter.setOnChoreCompletedListener { chore ->
+            currentHouseholdId?.let { householdId ->
+                viewModel.toggleChoreCompletion(chore.id, householdId)
+            }
+        }
     }
 
-    private fun isSameWeek(c1: Calendar, c2: Calendar): Boolean {
-        // Manual week calculation for better API 24 compatibility
-        val startOfWeek = c1.clone() as Calendar
-        startOfWeek.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
-        startOfWeek.set(Calendar.HOUR_OF_DAY, 0)
-        startOfWeek.set(Calendar.MINUTE, 0)
-        startOfWeek.set(Calendar.SECOND, 0)
+    private fun observeViewModel() {
+        lifecycleScope.launch {
+            viewModel.chores.collect { chores ->
+                updateDisplayedChores(currentFrequency)
+            }
+        }
 
-        val endOfWeek = startOfWeek.clone() as Calendar
-        endOfWeek.add(Calendar.DAY_OF_MONTH, 6)
-
-        return c2.timeInMillis >= startOfWeek.timeInMillis &&
-                c2.timeInMillis <= endOfWeek.timeInMillis
+        lifecycleScope.launch {
+            viewModel.progressData.collect { (completed, total, percentage) ->
+                binding.progressBar.progress = percentage
+                binding.progressCount.text = "$completed / $total"
+            }
+        }
     }
 
-    private fun isSameMonth(c1: Calendar, c2: Calendar): Boolean {
-        return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR) &&
-                c1.get(Calendar.MONTH) == c2.get(Calendar.MONTH)
+    private fun setupFilterTabs() {
+        binding.textOptionDailyChore.setOnClickListener {
+            updateDisplayedChores("daily")
+            highlightTab(binding.textOptionDailyChore)
+        }
+
+        binding.textOptionWeeklyChore.setOnClickListener {
+            updateDisplayedChores("weekly")
+            highlightTab(binding.textOptionWeeklyChore)
+        }
+
+        binding.textOptionMonthlyChore.setOnClickListener {
+            updateDisplayedChores("monthly")
+            highlightTab(binding.textOptionMonthlyChore)
+        }
+    }
+
+    private fun updateDisplayedChores(frequency: String) {
+        currentFrequency = frequency
+        val filteredChores = viewModel.filterChoresByFrequency(frequency)
+        choreAdapter.setChores(filteredChores)
+        viewModel.calculateProgress(frequency)
+
+        binding.textChoreDate.text = when (frequency) {
+            "daily" -> "Today"
+            "weekly" -> "This Week"
+            "monthly" -> "This Month"
+            else -> ""
+        }
     }
 
     private fun highlightTab(activeTextView: TextView) {
