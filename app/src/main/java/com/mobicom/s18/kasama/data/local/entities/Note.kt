@@ -10,5 +10,9 @@ data class Note(
     val title: String,
     val content: String,
     val createdBy: String,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+
+    // Sync tracking fields
+    val isSynced: Boolean = false,
+    val lastModified: Long = System.currentTimeMillis()
 )

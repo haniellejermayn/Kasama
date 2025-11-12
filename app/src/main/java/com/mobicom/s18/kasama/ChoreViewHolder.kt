@@ -17,6 +17,16 @@ class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerVie
         binding.choreItemName.text = chore.title
         binding.choreItemDueDate.text = chore.dueDate
 
+        // Show sync indicator
+        if (!chore.isSynced) {
+            binding.syncIndicator.visibility = View.VISIBLE
+            binding.syncIndicator.animate().rotation(360f).setDuration(1000).withEndAction {
+                binding.syncIndicator.rotation = 0f
+            }
+        } else {
+            binding.syncIndicator.visibility = View.GONE
+        }
+
         // Update UI based on completion status
         if (chore.isCompleted) {
             binding.choreItemStrikethrough.visibility = View.VISIBLE

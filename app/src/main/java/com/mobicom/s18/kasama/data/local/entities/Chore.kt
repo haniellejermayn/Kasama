@@ -14,5 +14,9 @@ data class Chore(
     val frequency: String? = null, // "daily", "weekly", "monthly", or null
     val createdBy: String, // User ID
     val createdAt: Long = System.currentTimeMillis(),
-    val completedAt: Long? = null
+    val completedAt: Long? = null,
+
+    // Sync tracking fields
+    val isSynced: Boolean = false,
+    val lastModified: Long = System.currentTimeMillis()
 )

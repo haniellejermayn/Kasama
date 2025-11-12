@@ -12,14 +12,28 @@ data class FirebaseNote(
 ) {
     constructor() : this("", "", "", "", "")
 
-    fun toEntity() : Note {
+    fun toEntity(isSynced: Boolean = true): Note {
         return Note(
             id = id,
             householdId = householdId,
             title = title,
             content = content,
             createdBy = createdBy,
-            createdAt = createdAt
+            createdAt = createdAt,
+            isSynced = isSynced,
+            lastModified = System.currentTimeMillis()
         )
     }
+}
+
+// Extension function to convert Room entity back to Firebase model
+fun Note.toFirebaseModel(): FirebaseNote {
+    return FirebaseNote(
+        id = id,
+        householdId = householdId,
+        title = title,
+        content = content,
+        createdBy = createdBy,
+        createdAt = createdAt
+    )
 }

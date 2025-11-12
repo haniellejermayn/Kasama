@@ -1,19 +1,20 @@
 package com.mobicom.s18.kasama.data.repository
 
+import androidx.work.*
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
+import com.mobicom.s18.kasama.data.local.entities.PendingDelete
 import com.mobicom.s18.kasama.data.remote.models.FirebaseChore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.mobicom.s18.kasama.workers.SyncWorker
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 class ChoreRepository(
     private val firestore: FirebaseFirestore,
-    private val database: KasamaDatabase
-
+    private val database: KasamaDatabase,
+    private val workManager: WorkManager
 ) {
 
     suspend fun createChore(
@@ -38,23 +39,11 @@ class ChoreRepository(
                 isCompleted = false
             )
 
-            // OFFLINE-FIRST: Save to Room first (immediate)
-            database.choreDao().insert(chore.toEntity())
+            // Save to Room with isSynced = false
+            database.choreDao().insert(chore.toEntity(isSynced = false))
 
-            // Then sync to Firebase (background)
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    firestore.collection("households")
-                        .document(householdId)
-                        .collection("chores")
-                        .document(choreId)
-                        .set(chore)
-                        .await()
-                } catch (e: Exception) {
-                    // Log error but don't fail - will sync later
-                    println("Failed to sync chore to Firebase: ${e.message}")
-                }
-            }
+            // Schedule sync
+            scheduleSyncWork()
 
             Result.success(chore)
         } catch (e: Exception) {
@@ -64,22 +53,15 @@ class ChoreRepository(
 
     suspend fun updateChore(chore: FirebaseChore): Result<Unit> {
         return try {
-            // OFFLINE-FIRST: Update Room first
-            database.choreDao().update(chore.toEntity())
+            // Update Room with isSynced = false
+            database.choreDao().update(
+                chore.toEntity(isSynced = false).copy(
+                    lastModified = System.currentTimeMillis()
+                )
+            )
 
-            // Then sync to Firebase (background)
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    firestore.collection("households")
-                        .document(chore.householdId)
-                        .collection("chores")
-                        .document(chore.id)
-                        .set(chore)
-                        .await()
-                } catch (e: Exception) {
-                    println("Failed to sync chore update to Firebase: ${e.message}")
-                }
-            }
+            // Schedule sync
+            scheduleSyncWork()
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -89,22 +71,23 @@ class ChoreRepository(
 
     suspend fun deleteChore(householdId: String, choreId: String): Result<Unit> {
         return try {
-            // OFFLINE-FIRST: Delete from Room first
             val chore = database.choreDao().getChoreByIdOnce(choreId)
-            chore?.let { database.choreDao().delete(it) }
 
-            // Then sync to Firebase (background)
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    firestore.collection("households")
-                        .document(householdId)
-                        .collection("chores")
-                        .document(choreId)
-                        .delete()
-                        .await()
-                } catch (e: Exception) {
-                    println("Failed to sync chore deletion to Firebase: ${e.message}")
-                }
+            if (chore != null) {
+                // Delete from Room immediately
+                database.choreDao().delete(chore)
+
+                // Track pending delete
+                database.pendingDeleteDao().insert(
+                    PendingDelete(
+                        itemId = choreId,
+                        itemType = "chore",
+                        householdId = householdId
+                    )
+                )
+
+                // Schedule sync
+                scheduleSyncWork()
             }
 
             Result.success(Unit)
@@ -127,10 +110,35 @@ class ChoreRepository(
 
             val chores = snapshot.toObjects(FirebaseChore::class.java)
             chores.forEach { chore ->
-                database.choreDao().insert(chore.toEntity())
+                // Only insert/update if not locally modified
+                val localChore = database.choreDao().getChoreByIdOnce(chore.id)
+                if (localChore == null || localChore.isSynced) {
+                    database.choreDao().insert(chore.toEntity(isSynced = true))
+                }
             }
         } catch (e: Exception) {
             println("Failed to sync chores from Firebase: ${e.message}")
         }
+    }
+
+    private fun scheduleSyncWork() {
+        val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+            )
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .build()
+
+        workManager.enqueueUniqueWork(
+            "sync_data",
+            ExistingWorkPolicy.REPLACE,
+            syncRequest
+        )
     }
 }

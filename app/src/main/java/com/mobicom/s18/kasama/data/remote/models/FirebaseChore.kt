@@ -11,7 +11,7 @@ data class FirebaseChore(
     val assignedTo: String = "",
     @get:PropertyName("completed")
     @set:PropertyName("completed")
-    var isCompleted: Boolean = false,  // Note: must be 'var' for Firestore deserialization
+    var isCompleted: Boolean = false,
     val frequency: String? = null,
     val createdBy: String = "",
     val createdAt: Long = System.currentTimeMillis(),
@@ -19,7 +19,7 @@ data class FirebaseChore(
 ) {
     constructor() : this("", "", "", 0L, "")
 
-    fun toEntity(): Chore {
+    fun toEntity(isSynced: Boolean = true): Chore {
         return Chore(
             id = id,
             householdId = householdId,
@@ -30,7 +30,25 @@ data class FirebaseChore(
             frequency = frequency,
             createdBy = createdBy,
             createdAt = createdAt,
-            completedAt = completedAt
+            completedAt = completedAt,
+            isSynced = isSynced,
+            lastModified = System.currentTimeMillis()
         )
     }
+}
+
+// Extension function to convert Room entity back to Firebase model
+fun Chore.toFirebaseModel(): FirebaseChore {
+    return FirebaseChore(
+        id = id,
+        householdId = householdId,
+        title = title,
+        dueDate = dueDate,
+        assignedTo = assignedTo,
+        isCompleted = isCompleted,
+        frequency = frequency,
+        createdBy = createdBy,
+        createdAt = createdAt,
+        completedAt = completedAt
+    )
 }

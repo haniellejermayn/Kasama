@@ -12,7 +12,7 @@ interface ChoreDao {
     @Update
     suspend fun update(chore: Chore)
 
-    @Query("SELECT * FROM chores where id = :choreId")
+    @Query("SELECT * FROM chores WHERE id = :choreId")
     suspend fun getChoreByIdOnce(choreId: String): Chore?
 
     @Query("SELECT * FROM chores WHERE householdId = :householdId ORDER BY dueDate ASC")
@@ -26,4 +26,11 @@ interface ChoreDao {
 
     @Delete
     suspend fun delete(chore: Chore)
+
+    // Sync methods
+    @Query("SELECT * FROM chores WHERE isSynced = 0")
+    suspend fun getUnsyncedChores(): List<Chore>
+
+    @Query("UPDATE chores SET isSynced = 1 WHERE id = :choreId")
+    suspend fun markAsSynced(choreId: String)
 }

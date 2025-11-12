@@ -20,4 +20,11 @@ interface NoteDao {
 
     @Delete
     suspend fun delete(note: Note)
+
+    // Sync methods
+    @Query("SELECT * FROM notes WHERE isSynced = 0")
+    suspend fun getUnsyncedNotes(): List<Note>
+
+    @Query("UPDATE notes SET isSynced = 1 WHERE id = :noteId")
+    suspend fun markAsSynced(noteId: String)
 }

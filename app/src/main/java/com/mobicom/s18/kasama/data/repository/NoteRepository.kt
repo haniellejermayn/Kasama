@@ -1,18 +1,20 @@
 package com.mobicom.s18.kasama.data.repository
 
+import androidx.work.*
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
+import com.mobicom.s18.kasama.data.local.entities.PendingDelete
 import com.mobicom.s18.kasama.data.remote.models.FirebaseNote
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.mobicom.s18.kasama.workers.SyncWorker
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 class NoteRepository(
     private val firestore: FirebaseFirestore,
-    private val database: KasamaDatabase
+    private val database: KasamaDatabase,
+    private val workManager: WorkManager
 ) {
 
     suspend fun createNote(
@@ -32,22 +34,11 @@ class NoteRepository(
                 createdBy = createdBy
             )
 
-            // OFFLINE-FIRST: Save to Room first
-            database.noteDao().insert(note.toEntity())
+            // Save to Room with isSynced = false
+            database.noteDao().insert(note.toEntity(isSynced = false))
 
-            // Then sync to Firebase (background)
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    firestore.collection("households")
-                        .document(householdId)
-                        .collection("notes")
-                        .document(noteId)
-                        .set(note)
-                        .await()
-                } catch (e: Exception) {
-                    println("Failed to sync note to Firebase: ${e.message}")
-                }
-            }
+            // Schedule sync
+            scheduleSyncWork()
 
             Result.success(note)
         } catch (e: Exception) {
@@ -55,24 +46,43 @@ class NoteRepository(
         }
     }
 
+    suspend fun updateNote(note: FirebaseNote): Result<Unit> {
+        return try {
+            // Update Room with isSynced = false
+            database.noteDao().update(
+                note.toEntity(isSynced = false).copy(
+                    lastModified = System.currentTimeMillis()
+                )
+            )
+
+            // Schedule sync
+            scheduleSyncWork()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun deleteNote(householdId: String, noteId: String): Result<Unit> {
         return try {
-            // OFFLINE-FIRST: Delete from Room first
             val note = database.noteDao().getNoteByIdOnce(noteId)
-            note?.let { database.noteDao().delete(it) }
 
-            // Then sync to Firebase (background)
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    firestore.collection("households")
-                        .document(householdId)
-                        .collection("notes")
-                        .document(noteId)
-                        .delete()
-                        .await()
-                } catch (e: Exception) {
-                    println("Failed to sync note deletion to Firebase: ${e.message}")
-                }
+            if (note != null) {
+                // Delete from Room immediately
+                database.noteDao().delete(note)
+
+                // Track pending delete
+                database.pendingDeleteDao().insert(
+                    PendingDelete(
+                        itemId = noteId,
+                        itemType = "note",
+                        householdId = householdId
+                    )
+                )
+
+                // Schedule sync
+                scheduleSyncWork()
             }
 
             Result.success(Unit)
@@ -95,35 +105,34 @@ class NoteRepository(
 
             val notes = snapshot.toObjects(FirebaseNote::class.java)
             notes.forEach { note ->
-                database.noteDao().insert(note.toEntity())
+                val localNote = database.noteDao().getNoteByIdOnce(note.id)
+                if (localNote == null || localNote.isSynced) {
+                    database.noteDao().insert(note.toEntity(isSynced = true))
+                }
             }
         } catch (e: Exception) {
             println("Failed to sync notes from Firebase: ${e.message}")
         }
     }
 
-    suspend fun updateNote(note: FirebaseNote): Result<Unit> {
-        return try {
-            // OFFLINE-FIRST: Update Room first
-            database.noteDao().update(note.toEntity())
+    private fun scheduleSyncWork() {
+        val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+            )
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .build()
 
-            // Then sync to Firebase (background)
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    firestore.collection("households")
-                        .document(note.householdId)
-                        .collection("notes")
-                        .document(note.id)
-                        .set(note)
-                        .await()
-                } catch (e: Exception) {
-                    println("Failed to sync note update to Firebase: ${e.message}")
-                }
-            }
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        workManager.enqueueUniqueWork(
+            "sync_data",
+            ExistingWorkPolicy.REPLACE,
+            syncRequest
+        )
     }
 }

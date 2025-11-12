@@ -9,7 +9,7 @@ import com.mobicom.s18.kasama.data.local.dao.*
 import com.mobicom.s18.kasama.data.local.entities.*
 
 @Database(
-    entities = [User::class, Household::class, Chore::class, Note::class],
+    entities = [User::class, Household::class, Chore::class, Note::class, PendingDelete::class],
     version = 2,
     exportSchema = false
 )
@@ -19,6 +19,7 @@ abstract class KasamaDatabase : RoomDatabase() {
     abstract fun householdDao(): HouseholdDao
     abstract fun choreDao(): ChoreDao
     abstract fun noteDao(): NoteDao
+    abstract fun pendingDeleteDao(): PendingDeleteDao
 
     companion object {
         @Volatile

@@ -60,7 +60,8 @@ class ChoreViewModel(
                             dueDate = dateFormat.format(Date(chore.dueDate)),
                             frequency = chore.frequency ?: "Never",
                             assignedToNames = listOfNotNull(assignedUser?.displayName),
-                            isCompleted = chore.isCompleted
+                            isCompleted = chore.isCompleted,
+                            isSynced = chore.isSynced
                         )
                     }
                     _chores.value = choreUIs

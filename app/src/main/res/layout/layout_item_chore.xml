@@ -31,22 +31,29 @@
             app:layout_constraintStart_toStartOf="@+id/choreItemName"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <ImageView
+            android:id="@+id/sync_indicator"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_sync_pending"
+            android:visibility="gone" app:tint="@color/primary_color"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="@+id/buttonChoreItem"
+            app:layout_constraintBottom_toBottomOf="@+id/buttonChoreItem" />
+
         <ImageButton
             android:id="@+id/buttonChoreItem"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:background="@null"
+            android:layout_marginStart="8dp" android:background="@null"
             android:src="@drawable/checkmark"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/sync_indicator" app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/choreItemName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:fontFamily="@font/open_sans_bold"
+            android:layout_marginStart="16dp" android:fontFamily="@font/open_sans_bold"
             android:text="Clean Bathroom"
             android:textColor="#000000"
             android:textSize="16sp"

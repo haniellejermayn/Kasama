@@ -1,6 +1,7 @@
 package com.mobicom.s18.kasama
 
 import android.app.Application
+import androidx.work.WorkManager
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -29,6 +30,10 @@ class KasamaApplication : Application() {
         FirebaseStorage.getInstance()
     }
 
+    val workManager: WorkManager by lazy {
+        WorkManager.getInstance(this)
+    }
+
     val authRepository: AuthRepository by lazy {
         AuthRepository(firebaseAuth, firestore, database)
     }
@@ -42,11 +47,11 @@ class KasamaApplication : Application() {
     }
 
     val choreRepository: ChoreRepository by lazy {
-        ChoreRepository(firestore, database)
+        ChoreRepository(firestore, database, workManager)
     }
 
     val noteRepository: NoteRepository by lazy {
-        NoteRepository(firestore, database)
+        NoteRepository(firestore, database, workManager)
     }
 
     val storageRepository: StorageRepository by lazy {
