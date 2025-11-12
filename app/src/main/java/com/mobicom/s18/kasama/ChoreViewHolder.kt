@@ -31,8 +31,6 @@ class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerVie
         }
 
         binding.buttonChoreItem.setOnClickListener {
-            chore.isCompleted = !chore.isCompleted
-            adapter.notifyItemChanged(bindingAdapterPosition)
             onChoreCompletedListener?.invoke(chore)
         }
 
