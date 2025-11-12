@@ -15,8 +15,29 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:background="@drawable/border">
+        android:background="@drawable/border"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/frequency_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/frequency_badge_background"
+            android:fontFamily="@font/open_sans"
+            android:paddingStart="8dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="2dp"
+            android:text="Daily"
+            android:textColor="#FFFFFF"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/choreItemName"
+            app:layout_constraintStart_toEndOf="@+id/choreItemName"
+            app:layout_constraintTop_toTopOf="@+id/choreItemName" />
 
         <View
             android:id="@+id/choreItemStrikethrough"
@@ -36,24 +57,29 @@
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:src="@drawable/ic_sync_pending"
-            android:visibility="gone" app:tint="@color/primary_color"
-            app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="@+id/buttonChoreItem"
-            app:layout_constraintBottom_toBottomOf="@+id/buttonChoreItem" />
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/buttonChoreItem"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/buttonChoreItem"
+            app:tint="@color/primary_color" />
 
         <ImageButton
             android:id="@+id/buttonChoreItem"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:layout_marginStart="8dp" android:background="@null"
+            android:layout_marginStart="8dp"
+            android:background="@null"
             android:src="@drawable/checkmark"
-            app:layout_constraintStart_toEndOf="@+id/sync_indicator" app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/sync_indicator"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/choreItemName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp" android:fontFamily="@font/open_sans_bold"
+            android:layout_marginStart="16dp"
+            android:fontFamily="@font/open_sans_bold"
             android:text="Clean Bathroom"
             android:textColor="#000000"
             android:textSize="16sp"

@@ -40,6 +40,14 @@ class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerVie
             binding.buttonChoreItem.setImageResource(R.drawable.checkmark)
         }
 
+        // Show frequency badge
+        if (chore.frequency != "Never" && chore.frequency.isNotBlank()) {
+            binding.frequencyBadge.text = chore.frequency
+            binding.frequencyBadge.visibility = View.VISIBLE
+        } else {
+            binding.frequencyBadge.visibility = View.GONE
+        }
+
         binding.buttonChoreItem.setOnClickListener {
             onChoreCompletedListener?.invoke(chore)
         }
