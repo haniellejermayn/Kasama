@@ -4,16 +4,14 @@ import android.app.Application
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
-import com.mobicom.s18.kasama.data.repository.AuthRepository
-import com.mobicom.s18.kasama.data.repository.ChoreRepository
-import com.mobicom.s18.kasama.data.repository.HouseholdRepository
-import com.mobicom.s18.kasama.data.repository.NoteRepository
-import com.mobicom.s18.kasama.data.repository.UserRepository
+import com.mobicom.s18.kasama.data.repository.*
+import com.mobicom.s18.kasama.notifications.NotificationHelper
+import com.mobicom.s18.kasama.notifications.NotificationScheduler
 
 class KasamaApplication : Application() {
 
-    // lazy initialization
     val database: KasamaDatabase by lazy {
         KasamaDatabase.getDatabase(this)
     }
@@ -49,5 +47,38 @@ class KasamaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         FirebaseApp.initializeApp(this)
+
+        // Create notification channels - Only for Android 9.0+
+        // NOTE: This does not work on Nougat
+        NotificationHelper.createNotificationChannels(this)
+
+        // Get FCM token and save it
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                android.util.Log.d("FCM_TOKEN", "Token: $token")
+                saveFcmToken(token)
+            }
+        }
+
+        // Schedule chore reminders if user is logged in
+        if (firebaseAuth.currentUser != null) {
+            NotificationScheduler.scheduleChoreReminders(this)
+        }
+    }
+
+    private fun saveFcmToken(token: String) {
+        val currentUser = firebaseAuth.currentUser
+        if (currentUser != null) {
+            firestore.collection("users")
+                .document(currentUser.uid)
+                .update("fcmToken", token)
+                .addOnSuccessListener {
+                    android.util.Log.d("FCM_TOKEN", "Token saved to Firestore")
+                }
+                .addOnFailureListener { e ->
+                    android.util.Log.e("FCM_TOKEN", "Failed to save token", e)
+                }
+        }
     }
 }

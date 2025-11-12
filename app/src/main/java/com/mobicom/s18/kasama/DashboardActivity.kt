@@ -2,12 +2,14 @@ package com.mobicom.s18.kasama
 
 import android.animation.ObjectAnimator
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -17,10 +19,17 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.mobicom.s18.kasama.databinding.LayoutDashboardPageBinding
+import com.mobicom.s18.kasama.models.ChoreUI
+import com.mobicom.s18.kasama.notifications.NotificationScheduler
+import com.mobicom.s18.kasama.notifications.NotificationTester
+import com.mobicom.s18.kasama.utils.PermissionHelper
 import com.mobicom.s18.kasama.utils.showChoreBottomSheet
 import com.mobicom.s18.kasama.utils.showNoteBottomSheet
 import com.mobicom.s18.kasama.viewmodels.DashboardViewModel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -67,6 +76,88 @@ class DashboardActivity : AppCompatActivity() {
 
         showTab(Tab.CHORES, animate = false)
         setupSideTab()
+
+        // Request notification permission
+        if (!PermissionHelper.checkNotificationPermission(this)) {
+            PermissionHelper.requestNotificationPermission(this)
+        }
+
+        // Schedule notifications when user logs in
+        NotificationScheduler.scheduleChoreReminders(this)
+
+        handleNotificationIntent(intent)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        when (requestCode) {
+            PermissionHelper.NOTIFICATION_PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permission granted, schedule notifications
+                    NotificationScheduler.scheduleChoreReminders(this)
+                } else {
+                    Toast.makeText(
+                        this,
+                        "Notification permission denied. You won't receive reminders.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        intent.let { handleNotificationIntent(it) }
+    }
+
+    private fun handleNotificationIntent(intent: Intent) {
+        val choreId = intent.getStringExtra("chore_id")
+        if (choreId != null) {
+            // User tapped on a chore notification
+            lifecycleScope.launch {
+                val app = application as KasamaApplication
+                currentHouseholdId?.let { householdId ->
+                    val choreEntity = app.database.choreDao().getChoreByIdOnce(choreId)
+                    if (choreEntity != null) {
+                        val assignedUser = app.userRepository.getUserById(choreEntity.assignedTo).getOrNull()
+                        val chore = ChoreUI(
+                            id = choreEntity.id,
+                            title = choreEntity.title,
+                            dueDate = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH).format(
+                                Date(
+                                    choreEntity.dueDate
+                                )
+                            ),
+                            frequency = choreEntity.frequency ?: "Never",
+                            assignedToNames = listOfNotNull(assignedUser?.displayName),
+                            isCompleted = choreEntity.isCompleted
+                        )
+
+                        val household = app.householdRepository.getHouseholdById(householdId).getOrNull()
+                        val housemateNames = household?.memberIds?.mapNotNull { userId ->
+                            app.userRepository.getUserById(userId).getOrNull()?.displayName
+                        } ?: emptyList()
+
+                        showChoreBottomSheet(
+                            context = this@DashboardActivity,
+                            availableHousemates = housemateNames,
+                            householdId = householdId,
+                            currentUserId = currentUserId ?: "",
+                            chore = chore,
+                            onSave = {
+                                viewModel.loadDashboardData(householdId)
+                            }
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun loadUserData() {
@@ -319,11 +410,75 @@ class DashboardActivity : AppCompatActivity() {
         binding.logOut.setOnClickListener {
             val app = application as KasamaApplication
             app.authRepository.logOut()
+
+            // Cancel scheduled notifications on logout
+            NotificationScheduler.cancelChoreReminders(this)
+
             val loginIntent = Intent(this, LoginActivity::class.java)
             loginIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(loginIntent)
             finish()
         }
+
+        // TODO: FOR TESTING PURPOSES (remove when needed)
+        binding.logOut.setOnLongClickListener {
+            showTestNotificationMenu()
+            true
+        }
+    }
+
+    // Shows a debug menu for testing notifications.
+    // TODO: Only for testing
+    private fun showTestNotificationMenu() {
+        val items = arrayOf(
+            "Test Chore Reminder",
+            "Test Overdue Chore",
+            "Test Household Notification",
+            "Test General Notification",
+            "Trigger Immediate Check",
+            "View FCM Token"
+        )
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Test Notifications")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> NotificationTester.testChoreReminder(this)
+                    1 -> NotificationTester.testOverdueChore(this)
+                    2 -> NotificationTester.testHouseholdNotification(this)
+                    3 -> NotificationTester.testGeneralNotification(this) // <-- Added
+                    4 -> {
+                        NotificationScheduler.scheduleImmediateChoreCheck(this)
+                        Toast.makeText(this, "WorkManager task triggered", Toast.LENGTH_SHORT).show()
+                    }
+                    5 -> showFcmToken() // <-- Kept
+                }
+            }
+            .show()
+    }
+
+    // Displays the current FCM token in an alert dialog with a copy button.
+    // TODO: Only for testing
+    private fun showFcmToken() {
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().token
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val token = task.result
+                    android.app.AlertDialog.Builder(this)
+                        .setTitle("FCM Token")
+                        .setMessage(token)
+                        .setPositiveButton("Copy") { _, _ ->
+                            val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("FCM Token", token)
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(this, "Token copied!", Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("Close", null)
+                        .show()
+                } else {
+                    Toast.makeText(this, "Failed to get FCM token.", Toast.LENGTH_SHORT).show()
+                }
+            }
     }
 
     private fun showTab(tab: Tab, animate: Boolean = true) {

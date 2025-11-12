@@ -10,7 +10,7 @@ import com.mobicom.s18.kasama.data.local.entities.*
 
 @Database(
     entities = [User::class, Household::class, Chore::class, Note::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -34,7 +34,9 @@ abstract class KasamaDatabase : RoomDatabase() {
                             context.applicationContext,
                             KasamaDatabase::class.java,
                             "kasama_database"
-                        ).build()
+                        )
+                            .fallbackToDestructiveMigration()
+                            .build()
                         INSTANCE = instance
                     }
                     return INSTANCE!!

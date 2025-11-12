@@ -10,6 +10,7 @@ data class FirebaseUser(
     val birthdate: Long? = null,
     val phoneNumber: String? = null,
     val householdId: String? = null,  // Single household for now
+    val fcmToken: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 ) {
     // required for firestore
@@ -25,6 +26,7 @@ data class FirebaseUser(
             birthdate = birthdate,
             phoneNumber = phoneNumber,
             householdId = householdId,
+            fcmToken = fcmToken,
             createdAt = createdAt
         )
     }

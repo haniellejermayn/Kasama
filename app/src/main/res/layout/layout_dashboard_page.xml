@@ -425,7 +425,7 @@
             android:id="@+id/log_out"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="100dp"
             android:text="Log out"
             android:textColor="@color/white"
             android:textStyle="bold"
