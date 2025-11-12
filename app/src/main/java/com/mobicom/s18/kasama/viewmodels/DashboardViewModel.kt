@@ -113,11 +113,26 @@ class DashboardViewModel(
 
                     _recentNotesCount.value = recentNotes.size
 
+                    // Define a date formatter
+                    val noteDateFormat = SimpleDateFormat("MMM dd", Locale.ENGLISH)
+
                     val noteUIs = noteEntities.take(6).map { note ->
+                        // --- THIS IS THE FIX ---
+                        // 1. Get creator name
+                        val creator = userRepository.getUserById(note.createdBy).getOrNull()
+                        val creatorName = creator?.displayName ?: "Unknown"
+
+                        // 2. Format date
+                        val createdAtFormatted = noteDateFormat.format(Date(note.createdAt))
+
+                        // 3. Create the complete NoteUI object
                         NoteUI(
                             id = note.id,
                             title = note.title,
-                            content = note.content
+                            content = note.content,
+                            createdBy = creatorName, // <-- Author is now included
+                            createdAt = createdAtFormatted,
+                            isSynced = note.isSynced
                         )
                     }
                     _notes.value = noteUIs

@@ -5,22 +5,63 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/text_note"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/sticky_note_container"
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="15dp"
         android:layout_marginEnd="8dp"
         android:background="@drawable/sticky_note_bg"
-        android:fontFamily="@font/open_sans"
-        android:gravity="center"
         android:padding="10dp"
-        android:text="Note Here"
-        android:textColor="#ffffff"
-        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <TextView
+            android:id="@+id/text_note"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/open_sans"
+            android:gravity="start"
+            android:maxLines="4"
+            android:text="Note Title"
+            android:textColor="#ffffff"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/text_note_author"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/text_note_author"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/open_sans"
+            android:maxLines="1"
+            android:text="By User"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/sync_indicator_note"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <ImageView
+            android:id="@+id/sync_indicator_note"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:src="@drawable/ic_sync_pending"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/text_note_author"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:tint="#FFFFFF"
+            tools:visibility="visible"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

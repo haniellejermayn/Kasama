@@ -3,15 +3,21 @@ package com.mobicom.s18.kasama.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+// Import UserRepository
 import com.mobicom.s18.kasama.data.repository.NoteRepository
+import com.mobicom.s18.kasama.data.repository.UserRepository
 import com.mobicom.s18.kasama.models.NoteUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class NoteViewModel(
-    private val noteRepository: NoteRepository
+    private val noteRepository: NoteRepository,
+    private val userRepository: UserRepository // <-- ADDED
 ) : ViewModel() {
 
     private val _notes = MutableStateFlow<List<NoteUI>>(emptyList())
@@ -29,11 +35,24 @@ class NoteViewModel(
             try {
                 noteRepository.syncNotesFromFirestore(householdId)
                 noteRepository.getNotesByHousehold(householdId).collect { noteEntities ->
+                    // val app = application as KasamaApplication // <-- REMOVED THIS LINE
                     val noteUIs = noteEntities.map { note ->
+                        // Get creator name
+                        // Use the userRepository from the constructor
+                        val creator = userRepository.getUserById(note.createdBy).getOrNull()
+                        val creatorName = creator?.displayName ?: "Unknown"
+
+                        // Format date
+                        val dateFormat = SimpleDateFormat("MMM dd", Locale.ENGLISH)
+                        val createdAtFormatted = dateFormat.format(Date(note.createdAt))
+
                         NoteUI(
                             id = note.id,
                             title = note.title,
-                            content = note.content
+                            content = note.content,
+                            createdBy = creatorName,
+                            createdAt = createdAtFormatted,
+                            isSynced = note.isSynced
                         )
                     }
                     _notes.value = noteUIs
@@ -67,12 +86,13 @@ class NoteViewModel(
     }
 
     class Factory(
-        private val noteRepository: NoteRepository
+        private val noteRepository: NoteRepository,
+        private val userRepository: UserRepository // <-- ADDED
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(NoteViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return NoteViewModel(noteRepository) as T
+                return NoteViewModel(noteRepository, userRepository) as T // <-- UPDATED
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

@@ -16,7 +16,10 @@ class NoteActivity : AppCompatActivity() {
 
     private val viewModel: NoteViewModel by viewModels {
         val app = application as KasamaApplication
-        NoteViewModel.Factory(app.noteRepository)
+        NoteViewModel.Factory(
+            app.noteRepository,
+            app.userRepository // <-- ADDED
+        )
     }
 
     private var currentHouseholdId: String? = null
