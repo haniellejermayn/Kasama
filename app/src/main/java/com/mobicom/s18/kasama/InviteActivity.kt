@@ -7,7 +7,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.mobicom.s18.kasama.databinding.LayoutInvitePageBinding
+import kotlinx.coroutines.launch
 
 class InviteActivity : AppCompatActivity() {
     private lateinit var viewBinding: LayoutInvitePageBinding
@@ -20,32 +22,101 @@ class InviteActivity : AppCompatActivity() {
         viewBinding = LayoutInvitePageBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
 
-        householdName = intent.getStringExtra("HOUSEHOLD_NAME") ?: "Household"
-        inviteCode = intent.getStringExtra("INVITE_CODE") ?: ""
-        householdId = intent.getStringExtra("HOUSEHOLD_ID") ?: ""
+        // Check if household data was passed via intent (from CreateHouseholdActivity)
+        if (intent.hasExtra("HOUSEHOLD_ID")) {
+            householdName = intent.getStringExtra("HOUSEHOLD_NAME") ?: "Household"
+            inviteCode = intent.getStringExtra("INVITE_CODE") ?: ""
+            householdId = intent.getStringExtra("HOUSEHOLD_ID") ?: ""
 
+            setupUI()
+        } else {
+            // Load from current user's household (from DashboardActivity)
+            loadCurrentHouseholdData()
+        }
+
+        setupListeners()
+    }
+
+    private fun loadCurrentHouseholdData() {
+        lifecycleScope.launch {
+            val app = application as KasamaApplication
+            val currentUser = app.firebaseAuth.currentUser
+
+            if (currentUser == null) {
+                Toast.makeText(this@InviteActivity, "User not logged in", Toast.LENGTH_SHORT).show()
+                finish()
+                return@launch
+            }
+
+            // Get user's household ID
+            val userResult = app.userRepository.getUserById(currentUser.uid)
+            if (userResult.isFailure || userResult.getOrNull()?.householdId == null) {
+                Toast.makeText(
+                    this@InviteActivity,
+                    "No household found. Please create one first.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                finish()
+                return@launch
+            }
+
+            val user = userResult.getOrNull()!!
+            householdId = user.householdId!!
+
+            // Get household details
+            val householdResult = app.householdRepository.getHouseholdById(householdId)
+            if (householdResult.isFailure) {
+                Toast.makeText(
+                    this@InviteActivity,
+                    "Failed to load household data",
+                    Toast.LENGTH_SHORT
+                ).show()
+                finish()
+                return@launch
+            }
+
+            val household = householdResult.getOrNull()!!
+            householdName = household.name
+            inviteCode = household.inviteCode
+
+            setupUI()
+        }
+    }
+
+    private fun setupUI() {
         viewBinding.headerTv.text = "Welcome to $householdName!"
         viewBinding.codeTv.text = inviteCode
         viewBinding.linkTv.text = "kasama.app/join/$inviteCode"
 
         // TODO: Generate QR code
+    }
 
+    private fun setupListeners() {
         viewBinding.goHomeBtn.setOnClickListener {
             val dashboardIntent = Intent(this, DashboardActivity::class.java)
+            dashboardIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             startActivity(dashboardIntent)
             finish()
         }
 
         viewBinding.codeTv.setOnClickListener {
-            copyToClipboard(inviteCode, "Invite code copied!")
+            if (::inviteCode.isInitialized) {
+                copyToClipboard(inviteCode, "Invite code copied!")
+            }
         }
 
         viewBinding.linkTv.setOnClickListener {
-            copyToClipboard("kasama.app/join/$inviteCode", "Invite link copied!")
+            if (::inviteCode.isInitialized) {
+                copyToClipboard("kasama.app/join/$inviteCode", "Invite link copied!")
+            }
         }
 
         viewBinding.shareTv.setOnClickListener {
-            shareHousehold()
+            if (::householdName.isInitialized && ::inviteCode.isInitialized) {
+                shareHousehold()
+            } else {
+                Toast.makeText(this, "Household data not loaded yet", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
