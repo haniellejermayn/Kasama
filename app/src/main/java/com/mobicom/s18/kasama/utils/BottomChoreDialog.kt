@@ -74,8 +74,16 @@ fun showChoreBottomSheet(
     binding.spinnerRepeats.adapter = adapter
 
     chore?.let {
-        val position = repeatOptions.indexOf(it.frequency)
-        if (position >= 0) binding.spinnerRepeats.setSelection(position)
+        // Capitalize the frequency string to match the "repeatOptions" array
+        // "daily" -> "Daily", "Never" -> "Never"
+        val frequencyToFind = it.frequency.replaceFirstChar { char ->
+            if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
+        }
+
+        val position = repeatOptions.indexOf(frequencyToFind)
+        if (position >= 0) {
+            binding.spinnerRepeats.setSelection(position)
+        }
     }
 
     binding.textDueDate.setOnClickListener {
