@@ -121,40 +121,42 @@ class DashboardActivity : AppCompatActivity() {
         if (choreId != null) {
             // User tapped on a chore notification
             lifecycleScope.launch {
+                // Use guard clauses to get non-null IDs safely
+                val householdId = currentHouseholdId ?: return@launch
+                val userId = currentUserId ?: return@launch
+
                 val app = application as KasamaApplication
-                currentHouseholdId?.let { householdId ->
-                    val choreEntity = app.database.choreDao().getChoreByIdOnce(choreId)
-                    if (choreEntity != null) {
-                        val assignedUser = app.userRepository.getUserById(choreEntity.assignedTo).getOrNull()
-                        val chore = ChoreUI(
-                            id = choreEntity.id,
-                            title = choreEntity.title,
-                            dueDate = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH).format(
-                                Date(
-                                    choreEntity.dueDate
-                                )
-                            ),
-                            frequency = choreEntity.frequency ?: "Never",
-                            assignedToNames = listOfNotNull(assignedUser?.displayName),
-                            isCompleted = choreEntity.isCompleted
-                        )
+                val choreEntity = app.database.choreDao().getChoreByIdOnce(choreId)
+                if (choreEntity != null) {
+                    val assignedUser = app.userRepository.getUserById(choreEntity.assignedTo).getOrNull()
+                    val chore = ChoreUI(
+                        id = choreEntity.id,
+                        title = choreEntity.title,
+                        dueDate = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH).format(
+                            Date(
+                                choreEntity.dueDate
+                            )
+                        ),
+                        frequency = choreEntity.frequency ?: "Never",
+                        assignedToNames = listOfNotNull(assignedUser?.displayName),
+                        isCompleted = choreEntity.isCompleted
+                    )
 
-                        val household = app.householdRepository.getHouseholdById(householdId).getOrNull()
-                        val housemateNames = household?.memberIds?.mapNotNull { userId ->
-                            app.userRepository.getUserById(userId).getOrNull()?.displayName
-                        } ?: emptyList()
+                    val household = app.householdRepository.getHouseholdById(householdId).getOrNull()
+                    val housemateNames = household?.memberIds?.mapNotNull { memberUserId ->
+                        app.userRepository.getUserById(memberUserId).getOrNull()?.displayName
+                    } ?: emptyList()
 
-                        showChoreBottomSheet(
-                            context = this@DashboardActivity,
-                            availableHousemates = housemateNames,
-                            householdId = householdId,
-                            currentUserId = currentUserId ?: "",
-                            chore = chore,
-                            onSave = {
-                                viewModel.loadDashboardData(householdId)
-                            }
-                        )
-                    }
+                    showChoreBottomSheet(
+                        context = this@DashboardActivity,
+                        availableHousemates = housemateNames,
+                        householdId = householdId, // Pass safe value
+                        currentUserId = userId,    // Pass safe value
+                        chore = chore,
+                        onSave = {
+                            viewModel.loadDashboardData(householdId, userId) // Pass safe values
+                        }
+                    )
                 }
             }
         }
@@ -164,15 +166,29 @@ class DashboardActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val app = application as KasamaApplication
             val currentUser = app.firebaseAuth.currentUser
-            if (currentUser != null) {
-                currentUserId = currentUser.uid
-                val userResult = app.userRepository.getUserById(currentUser.uid)
-                if (userResult.isSuccess) {
-                    val user = userResult.getOrNull()
-                    currentHouseholdId = user?.householdId
-                    currentHouseholdId?.let { householdId ->
-                        viewModel.loadDashboardData(householdId)
-                    }
+            if (currentUser == null) {
+                // TODO: No user, maybe log out or show an error
+                return@launch
+            }
+
+            // Use a local, non-null val for safety
+            val userId = currentUser.uid
+            currentUserId = userId // Set the class property
+
+            val userResult = app.userRepository.getUserById(userId)
+            if (userResult.isSuccess) {
+                val user = userResult.getOrNull()
+                val householdId = user?.householdId
+                currentHouseholdId = householdId
+
+                // Update side tab user info
+                binding.textSideTabName.text = user?.displayName ?: "User"
+                // TODO: Load profile picture if available
+                // Glide.with(this).load(user?.profilePictureUrl).into(binding.imageSideTabProfile)
+
+                // Pass the safe, local, non-null vals
+                if (householdId != null) {
+                    viewModel.loadDashboardData(householdId, userId)
                 }
             }
         }
@@ -185,26 +201,32 @@ class DashboardActivity : AppCompatActivity() {
 
         choreAdapter.setOnChoreClickListener { chore ->
             lifecycleScope.launch {
-                val app = application as KasamaApplication
-                currentHouseholdId?.let { householdId ->
-                    val householdResult = app.householdRepository.getHouseholdById(householdId)
-                    if (householdResult.isSuccess) {
-                        val household = householdResult.getOrNull()
-                        val housemateNames = household?.memberIds?.mapNotNull { userId ->
-                            app.userRepository.getUserById(userId).getOrNull()?.displayName
-                        } ?: emptyList()
+                // Guard clauses to get safe, non-null IDs first
+                val householdId = currentHouseholdId
+                val userId = currentUserId
+                if (householdId == null || userId == null) {
+                    Toast.makeText(this@DashboardActivity, "User data not loaded yet", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
 
-                        showChoreBottomSheet(
-                            context = this@DashboardActivity,
-                            availableHousemates = housemateNames,
-                            householdId = householdId,
-                            currentUserId = currentUserId ?: "",
-                            chore = chore,
-                            onSave = {
-                                viewModel.loadDashboardData(householdId)
-                            }
-                        )
-                    }
+                val app = application as KasamaApplication
+                val householdResult = app.householdRepository.getHouseholdById(householdId)
+                if (householdResult.isSuccess) {
+                    val household = householdResult.getOrNull()
+                    val housemateNames = household?.memberIds?.mapNotNull { memberUserId ->
+                        app.userRepository.getUserById(memberUserId).getOrNull()?.displayName
+                    } ?: emptyList()
+
+                    showChoreBottomSheet(
+                        context = this@DashboardActivity,
+                        availableHousemates = housemateNames,
+                        householdId = householdId, // Pass safe value
+                        currentUserId = userId,    // Pass safe value
+                        chore = chore,
+                        onSave = {
+                            viewModel.loadDashboardData(householdId, userId) // Pass safe values
+                        }
+                    )
                 }
             }
         }
@@ -250,6 +272,22 @@ class DashboardActivity : AppCompatActivity() {
                 binding.circularProgress.progress = percentage
                 binding.percentageDashboardProgress.text = "$percentage%"
                 binding.dashboardPercentText.text = message
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.mostProductiveMember.collect { (name, profileUrl) ->
+                binding.productiveHousemateName.text = name
+                // TODO: Load profile picture
+                // if (profileUrl != null) {
+                //     Glide.with(this@DashboardActivity).load(profileUrl).into(binding.productiveHousematePfp)
+                // }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.recentNotesCount.collect { count ->
+                binding.recentNotesCount.text = count.toString()
             }
         }
     }
@@ -353,33 +391,41 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun setupButtonListeners() {
         binding.buttonNewChore.setOnClickListener {
+            // Guard clauses to get safe, non-null IDs
+            val householdId = currentHouseholdId
+            val userId = currentUserId
+            if (householdId == null || userId == null) {
+                Toast.makeText(this, "User data not loaded yet", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             lifecycleScope.launch {
                 val app = application as KasamaApplication
-                currentHouseholdId?.let { householdId ->
-                    val householdResult = app.householdRepository.getHouseholdById(householdId)
-                    if (householdResult.isSuccess) {
-                        val household = householdResult.getOrNull()
-                        val housemateNames = household?.memberIds?.mapNotNull { userId ->
-                            app.userRepository.getUserById(userId).getOrNull()?.displayName
-                        } ?: emptyList()
+                val householdResult = app.householdRepository.getHouseholdById(householdId)
+                if (householdResult.isSuccess) {
+                    val household = householdResult.getOrNull()
+                    val housemateNames = household?.memberIds?.mapNotNull { memberUserId ->
+                        app.userRepository.getUserById(memberUserId).getOrNull()?.displayName
+                    } ?: emptyList()
 
-                        showChoreBottomSheet(
-                            context = this@DashboardActivity,
-                            availableHousemates = housemateNames,
-                            householdId = householdId,
-                            currentUserId = currentUserId ?: "",
-                            chore = null,
-                            onSave = {
-                                viewModel.loadDashboardData(householdId)
-                            }
-                        )
-                    }
+                    showChoreBottomSheet(
+                        context = this@DashboardActivity,
+                        availableHousemates = housemateNames,
+                        householdId = householdId, // Pass safe value
+                        currentUserId = userId,    // Pass safe value
+                        chore = null,
+                        onSave = {
+                            viewModel.loadDashboardData(householdId, userId) // Pass safe values
+                        }
+                    )
                 }
             }
         }
 
         binding.buttonViewAllChores.setOnClickListener {
             val allChoresIntent = Intent(this, ChoreActivity::class.java)
+            allChoresIntent.putExtra("household_id", currentHouseholdId)
+            allChoresIntent.putExtra("user_id", currentUserId)
             startActivity(allChoresIntent)
         }
 
@@ -389,17 +435,23 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         binding.buttonNewNote.setOnClickListener {
-            currentHouseholdId?.let { householdId ->
-                showNoteBottomSheet(
-                    context = this,
-                    householdId = householdId,
-                    currentUserId = currentUserId ?: "",
-                    note = null,
-                    onSave = {
-                        viewModel.loadDashboardData(householdId)
-                    }
-                )
+            // Guard clauses to get safe, non-null IDs
+            val householdId = currentHouseholdId
+            val userId = currentUserId
+            if (householdId == null || userId == null) {
+                Toast.makeText(this, "User data not loaded yet", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
+
+            showNoteBottomSheet(
+                context = this,
+                householdId = householdId, // Pass safe value
+                currentUserId = userId,    // Pass safe value
+                note = null,
+                onSave = {
+                    viewModel.loadDashboardData(householdId, userId) // Pass safe values
+                }
+            )
         }
 
         binding.buttonInviteMember.setOnClickListener {

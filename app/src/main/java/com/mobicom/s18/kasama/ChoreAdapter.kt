@@ -28,11 +28,11 @@ class ChoreAdapter(private var choreData: List<ChoreUI>) : RecyclerView.Adapter<
         notifyDataSetChanged()
     }
 
-    fun setOnChoreClickListener(listener: (ChoreUI) -> Unit) {
+    fun setOnChoreClickListener(listener: ((ChoreUI) -> Unit)?) {
         onChoreClickListener = listener
     }
 
-    fun setOnChoreCompletedListener(listener: (ChoreUI) -> Unit) {
+    fun setOnChoreCompletedListener(listener: ((ChoreUI) -> Unit)?) {
         onChoreCompletedListener = listener
     }
 }

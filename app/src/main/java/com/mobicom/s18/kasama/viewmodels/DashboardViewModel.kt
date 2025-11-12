@@ -39,6 +39,12 @@ class DashboardViewModel(
     private val _progressData = MutableStateFlow(Triple(0, "", "")) // percentage, message, progress text
     val progressData: StateFlow<Triple<Int, String, String>> = _progressData.asStateFlow()
 
+    private val _mostProductiveMember = MutableStateFlow<Pair<String, String?>>(Pair("Loading...", null)) // name, profileUrl
+    val mostProductiveMember: StateFlow<Pair<String, String?>> = _mostProductiveMember.asStateFlow()
+
+    private val _recentNotesCount = MutableStateFlow(0)
+    val recentNotesCount: StateFlow<Int> = _recentNotesCount.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -47,19 +53,23 @@ class DashboardViewModel(
 
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH)
 
-    fun loadDashboardData(householdId: String) {
-        loadChores(householdId)
-        loadNotes(householdId)
+    fun loadDashboardData(householdId: String, currentUserId: String) {
+        loadUserChores(householdId, currentUserId)
+        loadRecentNotes(householdId)
         loadHousemates(householdId)
+        loadMostProductiveMember(householdId)
     }
 
-    private fun loadChores(householdId: String) {
+    private fun loadUserChores(householdId: String, currentUserId: String) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 choreRepository.syncChoresFromFirestore(householdId)
                 choreRepository.getChoresByHousehold(householdId).collect { choreEntities ->
-                    val choreUIs = choreEntities.take(4).map { chore ->
+                    // Filter to only show current user's chores
+                    val userChores = choreEntities.filter { it.assignedTo == currentUserId }
+
+                    val choreUIs = userChores.take(4).map { chore ->
                         val assignedUser = userRepository.getUserById(chore.assignedTo).getOrNull()
                         ChoreUI(
                             id = chore.id,
@@ -71,7 +81,9 @@ class DashboardViewModel(
                         )
                     }
                     _chores.value = choreUIs
-                    updateProgress(choreEntities.map { chore ->
+
+                    // Update progress based on ALL user chores (not just top 4)
+                    updateProgress(userChores.map { chore ->
                         ChoreUI(
                             id = chore.id,
                             title = chore.title,
@@ -90,11 +102,17 @@ class DashboardViewModel(
         }
     }
 
-    private fun loadNotes(householdId: String) {
+    private fun loadRecentNotes(householdId: String) {
         viewModelScope.launch {
             try {
                 noteRepository.syncNotesFromFirestore(householdId)
                 noteRepository.getNotesByHousehold(householdId).collect { noteEntities ->
+                    // Get notes from the last 7 days
+                    val sevenDaysAgo = System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000)
+                    val recentNotes = noteEntities.filter { it.createdAt >= sevenDaysAgo }
+
+                    _recentNotesCount.value = recentNotes.size
+
                     val noteUIs = noteEntities.take(6).map { note ->
                         NoteUI(
                             id = note.id,
@@ -122,7 +140,6 @@ class DashboardViewModel(
                             val user = userResult.getOrNull()
 
                             if (user != null) {
-                                // Get chores from Room database for this user
                                 val allChores = choreRepository.getChoresByHousehold(householdId).first()
                                 val userChores = allChores.filter { it.assignedTo == userId && !it.isCompleted }
 
@@ -143,19 +160,51 @@ class DashboardViewModel(
         }
     }
 
+    private fun loadMostProductiveMember(householdId: String) {
+        viewModelScope.launch {
+            try {
+                val householdResult = householdRepository.getHouseholdById(householdId)
+                if (householdResult.isSuccess) {
+                    val household = householdResult.getOrNull()
+                    if (household != null) {
+                        val allChores = choreRepository.getChoresByHousehold(householdId).first()
+
+                        // Calculate completion count for each member
+                        val memberCompletions = household.memberIds.map { userId ->
+                            val completedCount = allChores.count {
+                                it.assignedTo == userId && it.isCompleted
+                            }
+                            userId to completedCount
+                        }.sortedByDescending { it.second }
+
+                        // Get the most productive member
+                        val topMemberId = memberCompletions.firstOrNull()?.first
+                        if (topMemberId != null) {
+                            val user = userRepository.getUserById(topMemberId).getOrNull()
+                            _mostProductiveMember.value = Pair(
+                                user?.displayName ?: "Unknown",
+                                user?.profilePictureUrl
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+                _mostProductiveMember.value = Pair("Error loading", null)
+            }
+        }
+    }
+
     fun toggleChoreCompletion(choreId: String, householdId: String) {
         viewModelScope.launch {
             try {
-                // Get the chore entity from Room database
                 val choreEntity = database.choreDao().getChoreByIdOnce(choreId) ?: return@launch
 
-                // Toggle completion status
                 val updatedChore = choreEntity.copy(
                     isCompleted = !choreEntity.isCompleted,
                     completedAt = if (!choreEntity.isCompleted) System.currentTimeMillis() else null
                 )
 
-                // Convert to FirebaseChore and update
                 choreRepository.updateChore(
                     com.mobicom.s18.kasama.data.remote.models.FirebaseChore(
                         id = updatedChore.id,
@@ -188,9 +237,9 @@ class DashboardViewModel(
         val message = when {
             progressPercentage == 100 -> "You've completed all your chores!"
             progressPercentage >= 75 -> "Almost there! Keep it up!"
-            progressPercentage >= 50 -> "You're halfway through your chores!"
-            progressPercentage > 0 -> "You have completed $progressPercentage% of your chores!"
-            else -> "Let's get started on those chores!"
+            progressPercentage >= 50 -> "You're halfway through!"
+            progressPercentage > 0 -> "You've completed $progressPercentage% of your chores!"
+            else -> "Let's get started!"
         }
 
         val progressText = "$completedChores / $totalChores"

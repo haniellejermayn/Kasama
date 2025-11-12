@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.mobicom.s18.kasama.databinding.LayoutChorePageBinding
-import com.mobicom.s18.kasama.models.ChoreUI
 import com.mobicom.s18.kasama.utils.showChoreBottomSheet
 import com.mobicom.s18.kasama.viewmodels.ChoreViewModel
 import kotlinx.coroutines.launch
@@ -18,7 +17,7 @@ import kotlinx.coroutines.launch
 class ChoreActivity : AppCompatActivity() {
 
     private lateinit var binding: LayoutChorePageBinding
-    private lateinit var choreAdapter: ChoreAdapter
+    private lateinit var choreSectionAdapter: ChoreSectionAdapter
 
     private val viewModel: ChoreViewModel by viewModels {
         val app = application as KasamaApplication
@@ -26,7 +25,8 @@ class ChoreActivity : AppCompatActivity() {
     }
 
     private var currentHouseholdId: String? = null
-    private var currentFrequency: String = "daily"
+    private var currentUserId: String? = null
+    private var currentFilter: String = "today"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,37 +34,49 @@ class ChoreActivity : AppCompatActivity() {
         binding = LayoutChorePageBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Get data from intent
+        currentHouseholdId = intent.getStringExtra("household_id")
+        currentUserId = intent.getStringExtra("user_id")
+
         setupRecyclerView()
         observeViewModel()
         setupFilterTabs()
 
-        loadUserHousehold()
+        loadHouseholdChores()
     }
 
-    private fun loadUserHousehold() {
+    private fun loadHouseholdChores() {
         lifecycleScope.launch {
             val app = application as KasamaApplication
-            val currentUser = app.firebaseAuth.currentUser
-            if (currentUser != null) {
-                val userResult = app.userRepository.getUserById(currentUser.uid)
-                if (userResult.isSuccess) {
-                    val user = userResult.getOrNull()
-                    currentHouseholdId = user?.householdId
-                    currentHouseholdId?.let { householdId ->
-                        viewModel.loadChoresByHousehold(householdId)
-                        updateDisplayedChores("daily")
+
+            // Get household and user IDs if not passed via intent
+            if (currentHouseholdId == null || currentUserId == null) {
+                val currentUser = app.firebaseAuth.currentUser
+                if (currentUser != null) {
+                    currentUserId = currentUser.uid
+                    val userResult = app.userRepository.getUserById(currentUser.uid)
+                    if (userResult.isSuccess) {
+                        val user = userResult.getOrNull()
+                        currentHouseholdId = user?.householdId
                     }
+                }
+            }
+
+            currentHouseholdId?.let { householdId ->
+                currentUserId?.let { userId ->
+                    viewModel.loadChoresGroupedByUser(householdId, userId)
+                    updateDisplayedChores("today")
                 }
             }
         }
     }
 
     private fun setupRecyclerView() {
-        choreAdapter = ChoreAdapter(emptyList())
+        choreSectionAdapter = ChoreSectionAdapter(emptyList())
         binding.choreRecyclerView.layoutManager = LinearLayoutManager(this)
-        binding.choreRecyclerView.adapter = choreAdapter
+        binding.choreRecyclerView.adapter = choreSectionAdapter
 
-        choreAdapter.setOnChoreClickListener { chore ->
+        choreSectionAdapter.setOnChoreClickListener { chore ->
             lifecycleScope.launch {
                 val app = application as KasamaApplication
                 currentHouseholdId?.let { householdId ->
@@ -79,10 +91,12 @@ class ChoreActivity : AppCompatActivity() {
                             context = this@ChoreActivity,
                             availableHousemates = housemateNames,
                             householdId = householdId,
-                            currentUserId = app.firebaseAuth.currentUser?.uid ?: "",
+                            currentUserId = currentUserId ?: "",
                             chore = chore,
                             onSave = {
-                                viewModel.loadChoresByHousehold(householdId)
+                                currentUserId?.let { userId ->
+                                    viewModel.loadChoresGroupedByUser(householdId, userId)
+                                }
                             }
                         )
                     }
@@ -90,7 +104,7 @@ class ChoreActivity : AppCompatActivity() {
             }
         }
 
-        choreAdapter.setOnChoreCompletedListener { chore ->
+        choreSectionAdapter.setOnChoreCompletedListener { chore ->
             currentHouseholdId?.let { householdId ->
                 viewModel.toggleChoreCompletion(chore.id, householdId)
             }
@@ -99,8 +113,8 @@ class ChoreActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.chores.collect { chores ->
-                updateDisplayedChores(currentFrequency)
+            viewModel.choreSections.collect { sections ->
+                updateDisplayedChores(currentFilter)
             }
         }
 
@@ -113,41 +127,48 @@ class ChoreActivity : AppCompatActivity() {
     }
 
     private fun setupFilterTabs() {
-        binding.textOptionDailyChore.setOnClickListener {
-            updateDisplayedChores("daily")
-            highlightTab(binding.textOptionDailyChore)
+        binding.textOptionToday.setOnClickListener {
+            updateDisplayedChores("today")
+            highlightTab(binding.textOptionToday)
         }
 
-        binding.textOptionWeeklyChore.setOnClickListener {
-            updateDisplayedChores("weekly")
-            highlightTab(binding.textOptionWeeklyChore)
+        binding.textOptionWeek.setOnClickListener {
+            updateDisplayedChores("this week")
+            highlightTab(binding.textOptionWeek)
         }
 
-        binding.textOptionMonthlyChore.setOnClickListener {
-            updateDisplayedChores("monthly")
-            highlightTab(binding.textOptionMonthlyChore)
+        binding.textOptionMonth.setOnClickListener {
+            updateDisplayedChores("this month")
+            highlightTab(binding.textOptionMonth)
+        }
+
+        binding.textOptionAll.setOnClickListener {
+            updateDisplayedChores("all")
+            highlightTab(binding.textOptionAll)
         }
     }
 
-    private fun updateDisplayedChores(frequency: String) {
-        currentFrequency = frequency
-        val filteredChores = viewModel.filterChoresByFrequency(frequency)
-        choreAdapter.setChores(filteredChores)
-        viewModel.calculateProgress(frequency)
+    private fun updateDisplayedChores(filter: String) {
+        currentFilter = filter
+        val filteredSections = viewModel.filterChoresByFrequencyGrouped(filter)
+        choreSectionAdapter.setSections(filteredSections)
+        viewModel.calculateProgressForFilter(filter)
 
-        binding.textChoreDate.text = when (frequency) {
-            "daily" -> "Today"
-            "weekly" -> "This Week"
-            "monthly" -> "This Month"
+        binding.textChoreDate.text = when (filter) {
+            "today" -> "Today"
+            "this week" -> "This Week"
+            "this month" -> "This Month"
+            "all" -> "All Chores"
             else -> ""
         }
     }
 
     private fun highlightTab(activeTextView: TextView) {
         val tabs = listOf(
-            binding.textOptionDailyChore to binding.bottomBorderDaily,
-            binding.textOptionWeeklyChore to binding.bottomBorderWeekly,
-            binding.textOptionMonthlyChore to binding.bottomBorderMonthly
+            binding.textOptionToday to binding.bottomBorderToday,
+            binding.textOptionWeek to binding.bottomBorderWeek,
+            binding.textOptionMonth to binding.bottomBorderMonth,
+            binding.textOptionAll to binding.bottomBorderAll
         )
 
         tabs.forEach { (textView, borderView) ->
