@@ -5,6 +5,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.storage.FirebaseStorage
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
 import com.mobicom.s18.kasama.data.repository.*
 import com.mobicom.s18.kasama.notifications.NotificationHelper
@@ -22,6 +23,10 @@ class KasamaApplication : Application() {
 
     val firestore: FirebaseFirestore by lazy {
         FirebaseFirestore.getInstance()
+    }
+
+    val firebaseStorage: FirebaseStorage by lazy {
+        FirebaseStorage.getInstance()
     }
 
     val authRepository: AuthRepository by lazy {
@@ -42,6 +47,10 @@ class KasamaApplication : Application() {
 
     val noteRepository: NoteRepository by lazy {
         NoteRepository(firestore, database)
+    }
+
+    val storageRepository: StorageRepository by lazy {
+        StorageRepository(firebaseStorage)
     }
 
     override fun onCreate() {

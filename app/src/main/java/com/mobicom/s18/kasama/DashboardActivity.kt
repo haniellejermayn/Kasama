@@ -18,6 +18,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.mobicom.s18.kasama.databinding.LayoutDashboardPageBinding
 import com.mobicom.s18.kasama.models.ChoreUI
 import com.mobicom.s18.kasama.notifications.NotificationScheduler
@@ -98,7 +99,6 @@ class DashboardActivity : AppCompatActivity() {
         when (requestCode) {
             PermissionHelper.NOTIFICATION_PERMISSION_REQUEST_CODE -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission granted, schedule notifications
                     NotificationScheduler.scheduleChoreReminders(this)
                 } else {
                     Toast.makeText(
@@ -119,9 +119,7 @@ class DashboardActivity : AppCompatActivity() {
     private fun handleNotificationIntent(intent: Intent) {
         val choreId = intent.getStringExtra("chore_id")
         if (choreId != null) {
-            // User tapped on a chore notification
             lifecycleScope.launch {
-                // Use guard clauses to get non-null IDs safely
                 val householdId = currentHouseholdId ?: return@launch
                 val userId = currentUserId ?: return@launch
 
@@ -133,9 +131,7 @@ class DashboardActivity : AppCompatActivity() {
                         id = choreEntity.id,
                         title = choreEntity.title,
                         dueDate = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH).format(
-                            Date(
-                                choreEntity.dueDate
-                            )
+                            Date(choreEntity.dueDate)
                         ),
                         frequency = choreEntity.frequency ?: "Never",
                         assignedToNames = listOfNotNull(assignedUser?.displayName),
@@ -150,11 +146,11 @@ class DashboardActivity : AppCompatActivity() {
                     showChoreBottomSheet(
                         context = this@DashboardActivity,
                         availableHousemates = housemateNames,
-                        householdId = householdId, // Pass safe value
-                        currentUserId = userId,    // Pass safe value
+                        householdId = householdId,
+                        currentUserId = userId,
                         chore = chore,
                         onSave = {
-                            viewModel.loadDashboardData(householdId, userId) // Pass safe values
+                            viewModel.loadDashboardData(householdId, userId)
                         }
                     )
                 }
@@ -167,13 +163,11 @@ class DashboardActivity : AppCompatActivity() {
             val app = application as KasamaApplication
             val currentUser = app.firebaseAuth.currentUser
             if (currentUser == null) {
-                // TODO: No user, maybe log out or show an error
                 return@launch
             }
 
-            // Use a local, non-null val for safety
             val userId = currentUser.uid
-            currentUserId = userId // Set the class property
+            currentUserId = userId
 
             val userResult = app.userRepository.getUserById(userId)
             if (userResult.isSuccess) {
@@ -183,10 +177,19 @@ class DashboardActivity : AppCompatActivity() {
 
                 // Update side tab user info
                 binding.textSideTabName.text = user?.displayName ?: "User"
-                // TODO: Load profile picture if available
-                // Glide.with(this).load(user?.profilePictureUrl).into(binding.imageSideTabProfile)
 
-                // Pass the safe, local, non-null vals
+                // Load profile picture
+                if (user?.profilePictureUrl != null) {
+                    Glide.with(this@DashboardActivity)
+                        .load(user.profilePictureUrl)
+                        .circleCrop()
+                        .placeholder(R.drawable.kasama_profile_default)
+                        .error(R.drawable.kasama_profile_default)
+                        .into(binding.imageSideTabProfile)
+                } else {
+                    binding.imageSideTabProfile.setImageResource(R.drawable.kasama_profile_default)
+                }
+
                 if (householdId != null) {
                     viewModel.loadDashboardData(householdId, userId)
                 }
@@ -201,7 +204,6 @@ class DashboardActivity : AppCompatActivity() {
 
         choreAdapter.setOnChoreClickListener { chore ->
             lifecycleScope.launch {
-                // Guard clauses to get safe, non-null IDs first
                 val householdId = currentHouseholdId
                 val userId = currentUserId
                 if (householdId == null || userId == null) {
@@ -220,11 +222,11 @@ class DashboardActivity : AppCompatActivity() {
                     showChoreBottomSheet(
                         context = this@DashboardActivity,
                         availableHousemates = housemateNames,
-                        householdId = householdId, // Pass safe value
-                        currentUserId = userId,    // Pass safe value
+                        householdId = householdId,
+                        currentUserId = userId,
                         chore = chore,
                         onSave = {
-                            viewModel.loadDashboardData(householdId, userId) // Pass safe values
+                            viewModel.loadDashboardData(householdId, userId)
                         }
                     )
                 }
@@ -278,10 +280,18 @@ class DashboardActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.mostProductiveMember.collect { (name, profileUrl) ->
                 binding.productiveHousemateName.text = name
-                // TODO: Load profile picture
-                // if (profileUrl != null) {
-                //     Glide.with(this@DashboardActivity).load(profileUrl).into(binding.productiveHousematePfp)
-                // }
+
+                // Load most productive member's profile picture
+                if (profileUrl != null) {
+                    Glide.with(this@DashboardActivity)
+                        .load(profileUrl)
+                        .circleCrop()
+                        .placeholder(R.drawable.kasama_profile_default)
+                        .error(R.drawable.kasama_profile_default)
+                        .into(binding.productiveHousematePfp)
+                } else {
+                    binding.productiveHousematePfp.setImageResource(R.drawable.kasama_profile_default)
+                }
             }
         }
 
@@ -295,11 +305,6 @@ class DashboardActivity : AppCompatActivity() {
     private fun setupSideTab() {
         val rootLayout = binding.dashboardPage
         sideTab = binding.sideTab
-
-        // TODO: Double check, but right now no need for multi-household support
-        // householdAdapter = HouseholdAdapter(arrayListOf())
-        // binding.rvSidetabHousehold.layoutManager = LinearLayoutManager(this)
-        // binding.rvSidetabHousehold.adapter = householdAdapter
 
         dimView = View(this).apply {
             setBackgroundColor(Color.parseColor("#80000000"))
@@ -391,7 +396,6 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun setupButtonListeners() {
         binding.buttonNewChore.setOnClickListener {
-            // Guard clauses to get safe, non-null IDs
             val householdId = currentHouseholdId
             val userId = currentUserId
             if (householdId == null || userId == null) {
@@ -411,11 +415,11 @@ class DashboardActivity : AppCompatActivity() {
                     showChoreBottomSheet(
                         context = this@DashboardActivity,
                         availableHousemates = housemateNames,
-                        householdId = householdId, // Pass safe value
-                        currentUserId = userId,    // Pass safe value
+                        householdId = householdId,
+                        currentUserId = userId,
                         chore = null,
                         onSave = {
-                            viewModel.loadDashboardData(householdId, userId) // Pass safe values
+                            viewModel.loadDashboardData(householdId, userId)
                         }
                     )
                 }
@@ -435,7 +439,6 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         binding.buttonNewNote.setOnClickListener {
-            // Guard clauses to get safe, non-null IDs
             val householdId = currentHouseholdId
             val userId = currentUserId
             if (householdId == null || userId == null) {
@@ -445,11 +448,11 @@ class DashboardActivity : AppCompatActivity() {
 
             showNoteBottomSheet(
                 context = this,
-                householdId = householdId, // Pass safe value
-                currentUserId = userId,    // Pass safe value
+                householdId = householdId,
+                currentUserId = userId,
                 note = null,
                 onSave = {
-                    viewModel.loadDashboardData(householdId, userId) // Pass safe values
+                    viewModel.loadDashboardData(householdId, userId)
                 }
             )
         }
@@ -463,7 +466,6 @@ class DashboardActivity : AppCompatActivity() {
             val app = application as KasamaApplication
             app.authRepository.logOut()
 
-            // Cancel scheduled notifications on logout
             NotificationScheduler.cancelChoreReminders(this)
 
             val loginIntent = Intent(this, LoginActivity::class.java)
@@ -472,15 +474,12 @@ class DashboardActivity : AppCompatActivity() {
             finish()
         }
 
-        // TODO: FOR TESTING PURPOSES (remove when needed)
         binding.logOut.setOnLongClickListener {
             showTestNotificationMenu()
             true
         }
     }
 
-    // Shows a debug menu for testing notifications.
-    // TODO: Only for testing
     private fun showTestNotificationMenu() {
         val items = arrayOf(
             "Test Chore Reminder",
@@ -498,19 +497,17 @@ class DashboardActivity : AppCompatActivity() {
                     0 -> NotificationTester.testChoreReminder(this)
                     1 -> NotificationTester.testOverdueChore(this)
                     2 -> NotificationTester.testHouseholdNotification(this)
-                    3 -> NotificationTester.testGeneralNotification(this) // <-- Added
+                    3 -> NotificationTester.testGeneralNotification(this)
                     4 -> {
                         NotificationScheduler.scheduleImmediateChoreCheck(this)
                         Toast.makeText(this, "WorkManager task triggered", Toast.LENGTH_SHORT).show()
                     }
-                    5 -> showFcmToken() // <-- Kept
+                    5 -> showFcmToken()
                 }
             }
             .show()
     }
 
-    // Displays the current FCM token in an alert dialog with a copy button.
-    // TODO: Only for testing
     private fun showFcmToken() {
         com.google.firebase.messaging.FirebaseMessaging.getInstance().token
             .addOnCompleteListener { task ->
