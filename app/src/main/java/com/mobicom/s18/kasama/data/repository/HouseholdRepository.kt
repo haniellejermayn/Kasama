@@ -1,5 +1,6 @@
 package com.mobicom.s18.kasama.data.repository
 
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
 import com.mobicom.s18.kasama.data.remote.models.FirebaseHousehold
@@ -107,6 +108,12 @@ class HouseholdRepository(
                 .update("householdId", household.id)
                 .await()
 
+            // ADDED: update user household ids
+            firestore.collection("users")
+                .document(userId)
+                .update("householdIDs", FieldValue.arrayUnion(household.id))
+                .await()
+
             // save to Room
             val updatedHousehold = household.copy(memberIds = updatedMembers)
             database.householdDao().insert(updatedHousehold.toEntity())
@@ -120,6 +127,38 @@ class HouseholdRepository(
             }
 
             Result.success(updatedHousehold)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ADDED: update current household
+    suspend fun updateCurrentHousehold(
+        householdId: String,
+        userId: String
+    ): Result<FirebaseHousehold> {
+        return try {
+            firestore.collection("users")
+                .document(userId)
+                .update("householdId", householdId)
+                .await()
+
+            val householdResult = getHouseholdById(householdId)
+            if (householdResult.isFailure) {
+                return Result.failure(householdResult.exceptionOrNull()!!)
+            }
+            val household = householdResult.getOrNull()!!
+
+            val user = database.userDao().getUserByIdOnce(userId)
+            if (user != null) {
+                database.userDao().update(
+                    user.copy(householdId = householdId)
+                )
+            } else {
+                return Result.failure(Exception("User not found locally"))
+            }
+
+            Result.success(household)
         } catch (e: Exception) {
             Result.failure(e)
         }

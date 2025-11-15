@@ -56,6 +56,7 @@
         <activity android:name=".InviteActivity" android:theme="@style/Theme.Kasama" />
         <activity android:name=".JoinActivity" android:theme="@style/Theme.Kasama" />
         <activity android:name=".JoinConfirmActivity" android:theme="@style/Theme.Kasama" />
+        <activity android:name=".MenuActivity" android:theme="@style/Theme.Kasama" />
 
         <activity
             android:name=".NoteActivity"

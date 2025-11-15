@@ -438,7 +438,7 @@
             app:layout_constraintStart_toStartOf="parent" />
 
         <ImageView
-            android:id="@+id/image_side_tab_profile"
+            android:id="@+id/image_profile"
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:layout_marginTop="30dp"
@@ -447,7 +447,7 @@
             app:srcCompat="@drawable/kasama_profile_default" />
 
         <TextView
-            android:id="@+id/text_side_tab_name"
+            android:id="@+id/text_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
@@ -456,9 +456,9 @@
             android:textColor="#FAF8F8"
             android:textSize="18sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@+id/image_side_tab_profile"
-            app:layout_constraintStart_toEndOf="@+id/image_side_tab_profile"
-            app:layout_constraintTop_toTopOf="@+id/image_side_tab_profile" />
+            app:layout_constraintBottom_toBottomOf="@+id/image_profile"
+            app:layout_constraintStart_toEndOf="@+id/image_profile"
+            app:layout_constraintTop_toTopOf="@+id/image_profile" />
 
         <FrameLayout
             android:id="@+id/frameLayout"
@@ -468,7 +468,7 @@
             android:background="#FDFCFC"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/image_side_tab_profile">
+            app:layout_constraintTop_toBottomOf="@+id/image_profile">
 
         </FrameLayout>
 
