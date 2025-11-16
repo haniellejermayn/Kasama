@@ -116,7 +116,7 @@
         android:layout_marginStart="28dp"
         android:layout_marginBottom="40dp"
         android:background="@drawable/rounded_button_secondary_light"
-        android:text="Join Household"
+        android:text="Join or Create Household"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 

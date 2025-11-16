@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -169,6 +170,11 @@ class DashboardActivity : AppCompatActivity() {
                 val user = userResult.getOrNull()
                 val householdId = user?.householdId
                 currentHouseholdId = householdId
+
+                Log.d("Households", "User is in $householdId")
+
+                val currHousehold = app.householdRepository.getHouseholdById(householdId.toString()).getOrNull()
+                binding.textDashboardHeader.text = "Dashboard - ${currHousehold?.name}"
 
                 if (householdId != null) {
                     viewModel.loadDashboardData(householdId, userId)

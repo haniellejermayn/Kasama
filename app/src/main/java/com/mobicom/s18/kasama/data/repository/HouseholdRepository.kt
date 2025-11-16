@@ -54,13 +54,34 @@ class HouseholdRepository(
                 .update("householdId", householdId)
                 .await()
 
+            val userDoc = firestore.collection("users").document(createdBy)
+            val snapshot = userDoc.get().await()
+            val currentIDs = snapshot.get("householdIDs")
+
+            val updatedIDs = when (currentIDs) {
+                is List<*> -> currentIDs + household.id
+                is String -> listOf(currentIDs, household.id)
+                else -> listOf(household.id)
+            }
+
+            userDoc.update("householdIDs", updatedIDs).await()
+
+            // ADDED: update user household ids
+            firestore.collection("users")
+                .document(createdBy)
+                .update("householdIDs", FieldValue.arrayUnion(household.id))
+                .await()
+
             // save to room
             database.householdDao().insert(household.toEntity())
 
             // update local user
             val user = database.userDao().getUserByIdOnce(createdBy)
             if (user != null) {
-                database.userDao().update(user.copy(householdId = householdId))
+                val updatedIDs = (user.householdIDs + household.id).distinct()
+                database.userDao().update(
+                    user.copy(householdIDs = updatedIDs, householdId = household.id)
+                )
             } else {
                 throw Exception("User not found")
             }
@@ -108,6 +129,18 @@ class HouseholdRepository(
                 .update("householdId", household.id)
                 .await()
 
+            val userDoc = firestore.collection("users").document(userId)
+            val snapshot = userDoc.get().await()
+            val currentIDs = snapshot.get("householdIDs")
+
+            val updatedIDs = when (currentIDs) {
+                is List<*> -> currentIDs + household.id
+                is String -> listOf(currentIDs, household.id)
+                else -> listOf(household.id)
+            }
+
+            userDoc.update("householdIDs", updatedIDs).await()
+
             // ADDED: update user household ids
             firestore.collection("users")
                 .document(userId)
@@ -121,9 +154,10 @@ class HouseholdRepository(
             // update local user
             val user = database.userDao().getUserByIdOnce(userId)
             if (user != null) {
-                database.userDao().update(user.copy(householdId = household.id))
-            } else {
-                throw Exception("User not found")
+                val updatedIDs = (user.householdIDs + household.id).distinct()
+                database.userDao().update(
+                    user.copy(householdIDs = updatedIDs, householdId = household.id)
+                )
             }
 
             Result.success(updatedHousehold)
