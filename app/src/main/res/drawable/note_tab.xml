@@ -5,11 +5,11 @@
     <stroke
         android:width="2dp"
         android:color="#33ABB2" />
-    <corners
+    <!--<corners
         android:topLeftRadius="13dp"
         android:topRightRadius="13dp"
         android:bottomLeftRadius="0dp"
-        android:bottomRightRadius="0dp" />
+        android:bottomRightRadius="0dp" />-->
     <padding
         android:left="12dp"
         android:top="12dp"

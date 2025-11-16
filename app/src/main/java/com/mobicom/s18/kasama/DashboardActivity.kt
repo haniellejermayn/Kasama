@@ -223,6 +223,7 @@ class DashboardActivity : AppCompatActivity() {
             currentHouseholdId?.let { householdId ->
                 viewModel.toggleChoreCompletion(chore.id, householdId)
             }
+
         }
 
         noteAdapter = NoteAdapter(mutableListOf())

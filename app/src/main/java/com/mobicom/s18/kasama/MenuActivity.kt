@@ -41,7 +41,9 @@ class MenuActivity : AppCompatActivity() {
 
     fun setupButtonListeners() {
         viewBinding.buttonEditProfile.setOnClickListener {
-            val editProfileIntent = Intent(this, ProfileSetupActivity::class.java)
+            val editProfileIntent = Intent(this, ProfileSetupActivity::class.java).apply {
+                putExtra("MODE", "edit")
+            }
             startActivity(editProfileIntent)
         }
 
