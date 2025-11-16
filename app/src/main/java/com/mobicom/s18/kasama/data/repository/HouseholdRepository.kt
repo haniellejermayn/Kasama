@@ -169,7 +169,6 @@ class HouseholdRepository(
         }
     }
 
-    // ADDED: update current household
     suspend fun updateCurrentHousehold(
         householdId: String,
         userId: String
@@ -201,51 +200,46 @@ class HouseholdRepository(
         }
     }
 
-    suspend fun updateHousehold(householdId: String, newName: String, createdBy: String): Result<FirebaseHousehold> {
+    suspend fun updateHousehold(
+        householdId: String,
+        newName: String,
+        createdBy: String
+    ): Result<FirebaseHousehold> {
         return try {
-            Log.d("HH-UPDATE", "Updating Firestore householdId=$householdId newName=$newName")
-
             firestore.collection("households")
                 .document(householdId)
                 .update(
                     mapOf(
                         "name" to newName,
-                        "createdBy" to createdBy // must match existing
+                        "createdBy" to createdBy
                     )
                 )
                 .await()
 
-            Log.d("HH-UPDATE", "Firestore update success")
-
-            // Fetch updated household
             val firestoreResult = getHouseholdById(householdId)
             if (firestoreResult.isFailure) {
                 Log.e("HH-UPDATE", "Failed to fetch updated household: ${firestoreResult.exceptionOrNull()}")
                 return Result.failure(firestoreResult.exceptionOrNull()!!)
             }
-
             val updatedHousehold = firestoreResult.getOrNull()!!
-            Log.d("HH-UPDATE", "Fetched updated household: ${updatedHousehold.name}")
 
             // Update Room
             val localHousehold = database.householdDao().getHouseholdByIdOnce(householdId)
             if (localHousehold == null) {
-                Log.e("HH-UPDATE", "Local household not found for id=$householdId")
                 return Result.failure(Exception("Household not found locally"))
             }
-
             database.householdDao().update(localHousehold.copy(name = newName))
-            Log.d("HH-UPDATE", "Room DB updated successfully")
 
             Result.success(updatedHousehold)
-
         } catch (e: Exception) {
             Log.e("HH-UPDATE", "Update failed", e)
             Result.failure(e)
         }
     }
 
-    suspend fun deleteHousehold(householdId: String): Result<FirebaseHousehold> {
+    suspend fun deleteHousehold(
+        householdId: String
+    ): Result<FirebaseHousehold> {
         return try {
             // Fetch household from Firestore
             val householdSnapshot = firestore.collection("households")
@@ -312,8 +306,10 @@ class HouseholdRepository(
         }
     }
 
-
-    suspend fun leaveHousehold(householdId: String, userId: String): Result<FirebaseHousehold> {
+    suspend fun leaveHousehold(
+        householdId: String,
+        userId: String
+    ): Result<FirebaseHousehold> {
         return try {
             val householdSnapshot = firestore.collection("households")
                 .document(householdId)
@@ -372,13 +368,14 @@ class HouseholdRepository(
                 ?: return Result.failure(Exception("Failed to fetch updated household"))
 
             Result.success(updatedHousehold)
-
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun getHouseholdById(householdId: String): Result<FirebaseHousehold> {
+    suspend fun getHouseholdById(
+        householdId: String
+    ): Result<FirebaseHousehold> {
         return try {
             val doc = firestore.collection("households")
                 .document(householdId)
@@ -394,7 +391,9 @@ class HouseholdRepository(
         }
     }
 
-    suspend fun getHouseholdByInviteCode(inviteCode: String): Result<FirebaseHousehold> {
+    suspend fun getHouseholdByInviteCode(
+        inviteCode: String
+    ): Result<FirebaseHousehold> {
         return try {
             val querySnapshot = firestore.collection("households")
                 .whereEqualTo("inviteCode", inviteCode)

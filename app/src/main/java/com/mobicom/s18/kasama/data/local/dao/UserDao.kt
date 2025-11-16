@@ -23,8 +23,4 @@ interface UserDao {
 
     @Delete
     suspend fun delete(user: User)
-
-    // Force householdIDs to only the ones specified
-    @Query("UPDATE users SET householdIDs = :keepIds WHERE uid = :userId")
-    suspend fun keepOnlyHouseholds(userId: String, keepIds: List<String>)
 }

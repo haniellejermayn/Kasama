@@ -14,7 +14,5 @@ data class User(
     val householdId: String? = null,
     val fcmToken: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
-
-    // Added
     val householdIDs: List<String> = emptyList()
 )

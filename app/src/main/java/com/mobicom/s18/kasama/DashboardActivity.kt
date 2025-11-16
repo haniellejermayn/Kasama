@@ -177,8 +177,6 @@ class DashboardActivity : AppCompatActivity() {
                 val householdId = user?.householdId
                 currentHouseholdId = householdId
 
-                Log.d("Households", "User is in $householdId")
-
                 val currHousehold = app.householdRepository.getHouseholdById(householdId.toString()).getOrNull()
                 binding.textDashboardHeader.text = "${currHousehold?.name}"
 
