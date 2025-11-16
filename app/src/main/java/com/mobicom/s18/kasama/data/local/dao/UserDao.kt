@@ -18,6 +18,13 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE uid = :userId")
     suspend fun getUserByIdOnce(userId: String): User?
 
+    @Query("SELECT * FROM users WHERE householdId = :householdId")
+    suspend fun getUsersByHouseholdId(householdId: String): List<User>
+
     @Delete
     suspend fun delete(user: User)
+
+    // Force householdIDs to only the ones specified
+    @Query("UPDATE users SET householdIDs = :keepIds WHERE uid = :userId")
+    suspend fun keepOnlyHouseholds(userId: String, keepIds: List<String>)
 }

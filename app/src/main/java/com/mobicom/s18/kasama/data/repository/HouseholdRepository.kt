@@ -1,8 +1,11 @@
 package com.mobicom.s18.kasama.data.repository
 
+import android.util.Log
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
+import com.mobicom.s18.kasama.data.local.entities.Household
+import com.mobicom.s18.kasama.data.remote.models.FirebaseUser
 import com.mobicom.s18.kasama.data.remote.models.FirebaseHousehold
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
@@ -193,6 +196,183 @@ class HouseholdRepository(
             }
 
             Result.success(household)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateHousehold(householdId: String, newName: String, createdBy: String): Result<FirebaseHousehold> {
+        return try {
+            Log.d("HH-UPDATE", "Updating Firestore householdId=$householdId newName=$newName")
+
+            firestore.collection("households")
+                .document(householdId)
+                .update(
+                    mapOf(
+                        "name" to newName,
+                        "createdBy" to createdBy // must match existing
+                    )
+                )
+                .await()
+
+            Log.d("HH-UPDATE", "Firestore update success")
+
+            // Fetch updated household
+            val firestoreResult = getHouseholdById(householdId)
+            if (firestoreResult.isFailure) {
+                Log.e("HH-UPDATE", "Failed to fetch updated household: ${firestoreResult.exceptionOrNull()}")
+                return Result.failure(firestoreResult.exceptionOrNull()!!)
+            }
+
+            val updatedHousehold = firestoreResult.getOrNull()!!
+            Log.d("HH-UPDATE", "Fetched updated household: ${updatedHousehold.name}")
+
+            // Update Room
+            val localHousehold = database.householdDao().getHouseholdByIdOnce(householdId)
+            if (localHousehold == null) {
+                Log.e("HH-UPDATE", "Local household not found for id=$householdId")
+                return Result.failure(Exception("Household not found locally"))
+            }
+
+            database.householdDao().update(localHousehold.copy(name = newName))
+            Log.d("HH-UPDATE", "Room DB updated successfully")
+
+            Result.success(updatedHousehold)
+
+        } catch (e: Exception) {
+            Log.e("HH-UPDATE", "Update failed", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteHousehold(householdId: String): Result<FirebaseHousehold> {
+        return try {
+            // Fetch household from Firestore
+            val householdSnapshot = firestore.collection("households")
+                .document(householdId)
+                .get()
+                .await()
+
+            if (!householdSnapshot.exists()) {
+                return Result.failure(Exception("Household not found"))
+            }
+
+            val household = householdSnapshot.toObject(FirebaseHousehold::class.java)
+                ?: return Result.failure(Exception("Failed to parse household"))
+
+            val creatorId = household.createdBy
+
+            // Check if there are other members besides the creator
+            val otherMembers = household.memberIds.filter { it != creatorId }
+            if (otherMembers.isNotEmpty()) {
+                return Result.failure(Exception("Cannot delete household while other members exist."))
+            }
+
+            // Update the creator user locally and in Firestore
+            val user = database.userDao().getUserByIdOnce(creatorId)
+            if (user != null) {
+                val updatedHouseholdIDs = user.householdIDs.toMutableList().apply { remove(householdId) }
+                val newCurrentHouseholdId = if (user.householdId == householdId) updatedHouseholdIDs.firstOrNull() else user.householdId
+
+                // Firestore update
+                firestore.collection("users")
+                    .document(creatorId)
+                    .update(
+                        mapOf(
+                            "householdIDs" to updatedHouseholdIDs,
+                            "householdId" to newCurrentHouseholdId
+                        )
+                    )
+                    .await()
+
+                // Room update
+                database.userDao().update(
+                    user.copy(
+                        householdId = newCurrentHouseholdId,
+                        householdIDs = updatedHouseholdIDs
+                    )
+                )
+            }
+
+            // Delete household in Firestore
+            firestore.collection("households")
+                .document(householdId)
+                .delete()
+                .await()
+
+            // Delete household in local Room database
+            val localHousehold = database.householdDao().getHouseholdByIdOnce(householdId)
+            if (localHousehold != null) {
+                database.householdDao().delete(localHousehold)
+            }
+
+            Result.success(household)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+    suspend fun leaveHousehold(householdId: String, userId: String): Result<FirebaseHousehold> {
+        return try {
+            val householdSnapshot = firestore.collection("households")
+                .document(householdId)
+                .get()
+                .await()
+
+            if (!householdSnapshot.exists()) {
+                return Result.failure(Exception("Household not found"))
+            }
+
+            val household = householdSnapshot.toObject(FirebaseHousehold::class.java)
+                ?: return Result.failure(Exception("Failed to parse household"))
+
+            val updatedMemberIds = household.memberIds.toMutableList().apply { remove(userId) }
+            firestore.collection("households")
+                .document(householdId)
+                .update("memberIds", updatedMemberIds)
+                .await()
+
+            val localHousehold = database.householdDao().getHouseholdByIdOnce(householdId)
+            if (localHousehold != null) {
+                database.householdDao().update(localHousehold.copy(memberIds = updatedMemberIds))
+            }
+
+            val user = database.userDao().getUserByIdOnce(userId)
+            if (user != null) {
+                val updatedHouseholdIDs = user.householdIDs.toMutableList().apply { remove(householdId) }
+                val newCurrentHouseholdId = if (user.householdId == householdId) {
+                    updatedHouseholdIDs.firstOrNull()
+                } else user.householdId
+
+                firestore.collection("users")
+                    .document(user.uid)
+                    .update(
+                        mapOf(
+                            "householdId" to newCurrentHouseholdId,
+                            "householdIDs" to updatedHouseholdIDs
+                        )
+                    )
+                    .await()
+
+                database.userDao().update(
+                    user.copy(
+                        householdId = newCurrentHouseholdId,
+                        householdIDs = updatedHouseholdIDs
+                    )
+                )
+            }
+
+            val updatedHouseholdSnapshot = firestore.collection("households")
+                .document(householdId)
+                .get()
+                .await()
+
+            val updatedHousehold = updatedHouseholdSnapshot.toObject(FirebaseHousehold::class.java)
+                ?: return Result.failure(Exception("Failed to fetch updated household"))
+
+            Result.success(updatedHousehold)
+
         } catch (e: Exception) {
             Result.failure(e)
         }

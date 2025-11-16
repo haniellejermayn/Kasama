@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
         android:fontFamily="@font/open_sans"
-        android:text="Hep"
+        android:text="Loading..."
         android:textColor="#FAF8F8"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -43,7 +43,7 @@
             android:id="@+id/text_bday"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="birthday here"
+            android:text="Loading..."
             android:textColor="#FBF8F8" />
 
         <TextView
@@ -51,7 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
-            android:text="text_number"
+            android:text="Loading..."
             android:textColor="#FBFBFB" />
     </LinearLayout>
 

@@ -168,6 +168,12 @@ class DashboardActivity : AppCompatActivity() {
             val userResult = app.userRepository.getUserById(userId)
             if (userResult.isSuccess) {
                 val user = userResult.getOrNull()
+
+                if (user?.householdId == null) {
+                    val i = Intent(this@DashboardActivity, DashboardEmptyActivity::class.java)
+                    startActivity(i)
+                }
+
                 val householdId = user?.householdId
                 currentHouseholdId = householdId
 

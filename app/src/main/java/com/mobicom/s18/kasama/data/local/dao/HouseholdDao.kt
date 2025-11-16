@@ -18,6 +18,9 @@ interface HouseholdDao {
     @Query("SELECT * FROM households WHERE id = :householdId")
     fun getHouseholdById(householdId: String): Flow<Household?>
 
+    @Query("SELECT * FROM households WHERE id = :householdId LIMIT 1")
+    suspend fun getHouseholdByIdOnce(householdId: String): Household?
+
     @Query("SELECT * FROM households WHERE inviteCode = :code")
     suspend fun getHouseholdByInviteCode(code: String): Household?
 

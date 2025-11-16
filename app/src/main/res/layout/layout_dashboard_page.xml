@@ -119,15 +119,12 @@
             android:id="@+id/text_housemate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="50dp"
             android:layout_marginTop="10dp"
-            android:layout_marginEnd="50dp"
             android:fontFamily="@font/open_sans_bold"
             android:text="Housemate"
             android:textColor="#FDFDFD"
             android:textSize="14sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -140,7 +137,7 @@
             android:layout_marginBottom="12dp"
             android:fontFamily="@font/open_sans_bold"
             android:text="has been super productive!"
-            android:textAlignment="center"
+            android:textAlignment="viewStart"
             android:textColor="#FDFDFD"
             android:textSize="12sp"
             android:textStyle="bold"
@@ -155,7 +152,6 @@
             android:gravity="center_horizontal|center_vertical"
             android:orientation="horizontal"
             app:layout_constraintBottom_toTopOf="@+id/text_productivity"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/text_housemate">
 
