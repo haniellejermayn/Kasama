@@ -99,7 +99,8 @@ class InviteActivity : AppCompatActivity() {
     private fun setupListeners() {
         viewBinding.goHomeBtn.setOnClickListener {
             val dashboardIntent = Intent(this, DashboardActivity::class.java)
-            dashboardIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            dashboardIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+
             startActivity(dashboardIntent)
             finish()
         }

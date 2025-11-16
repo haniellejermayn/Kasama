@@ -3,6 +3,7 @@ package com.mobicom.s18.kasama
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContentProviderCompat.requireContext
@@ -102,6 +103,8 @@ class MenuActivity : AppCompatActivity() {
 
                 // Get all households the user is in
                 Log.d("Households", "User is in ${user?.householdIDs?.size} households: ${user?.householdIDs}")
+                viewBinding.loadingOverlay.visibility = View.VISIBLE
+
                 val allHouseholds = user?.householdIDs
                     ?.mapNotNull { hsId ->
                         val result = app.householdRepository.getHouseholdById(hsId)
@@ -115,18 +118,22 @@ class MenuActivity : AppCompatActivity() {
                         isActive = false
                     )
                 }
+                viewBinding.loadingOverlay.visibility = View.GONE
 
                 rv_households = viewBinding.rvSidetabHousehold
                 rv_households.layoutManager = LinearLayoutManager(this@MenuActivity)
                 rv_households.adapter = HouseholdAdapter(householdUIs) { selected ->
                     lifecycleScope.launch {
                         if (selected.id == user?.householdId) {
+                            viewBinding.loadingOverlay.visibility = View.GONE
                             Toast.makeText(this@MenuActivity, "Household already selected.", Toast.LENGTH_SHORT).show()
                         } else {
                             val result = app.householdRepository.updateCurrentHousehold(
                                 householdId = selected.id,
                                 userId = currentUserId.toString()
                             )
+
+                            viewBinding.loadingOverlay.visibility = View.GONE
 
                             if (result.isSuccess) {
                                 val updatedHousehold = result.getOrNull()

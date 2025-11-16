@@ -133,4 +133,23 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.885" />
 
+    <FrameLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/rv_sidetab_household"
+        app:layout_constraintEnd_toEndOf="@+id/rv_sidetab_household"
+        app:layout_constraintStart_toStartOf="@+id/rv_sidetab_household"
+        app:layout_constraintTop_toTopOf="@+id/rv_sidetab_household">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+
+    </FrameLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
