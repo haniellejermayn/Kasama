@@ -174,7 +174,7 @@ class DashboardActivity : AppCompatActivity() {
                 Log.d("Households", "User is in $householdId")
 
                 val currHousehold = app.householdRepository.getHouseholdById(householdId.toString()).getOrNull()
-                binding.textDashboardHeader.text = "Dashboard - ${currHousehold?.name}"
+                binding.textDashboardHeader.text = "${currHousehold?.name}"
 
                 if (householdId != null) {
                     viewModel.loadDashboardData(householdId, userId)
@@ -396,6 +396,11 @@ class DashboardActivity : AppCompatActivity() {
         binding.buttonHome.setOnClickListener {
             val menuIntent = Intent(this, MenuActivity::class.java)
             startActivity(menuIntent)
+        }
+
+        binding.settings.setOnClickListener {
+            val settingsIntent = Intent(this, SettingsActivity::class.java)
+            startActivity(settingsIntent)
         }
     }
 
