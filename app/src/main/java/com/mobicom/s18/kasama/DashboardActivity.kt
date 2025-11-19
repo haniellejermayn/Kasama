@@ -505,6 +505,7 @@ class DashboardActivity : AppCompatActivity() {
 
                 binding.buttonNewNote.isVisible = false
                 binding.buttonViewAllNotes.isVisible = false
+                binding.textNotesSectionLabel.isVisible = false
                 binding.dashboardNotesRecyclerView.isVisible = false
                 binding.buttonInviteMember.isVisible = false
                 binding.dashboardHousemateRecyclerView.isVisible = false
@@ -512,6 +513,7 @@ class DashboardActivity : AppCompatActivity() {
             Tab.NOTES -> {
                 binding.buttonNewNote.isVisible = true
                 binding.buttonViewAllNotes.isVisible = true
+                binding.textNotesSectionLabel.isVisible = true
                 binding.dashboardNotesRecyclerView.isVisible = true
 
                 binding.buttonNewChore.isVisible = false
@@ -531,6 +533,7 @@ class DashboardActivity : AppCompatActivity() {
                 binding.dashboardChoreRecyclerView.isVisible = false
                 binding.buttonNewNote.isVisible = false
                 binding.buttonViewAllNotes.isVisible = false
+                binding.textNotesSectionLabel.isVisible = false
                 binding.dashboardNotesRecyclerView.isVisible = false
             }
         }
@@ -544,6 +547,7 @@ class DashboardActivity : AppCompatActivity() {
             binding.buttonViewAllChores,
             binding.buttonViewAllNotes,
             binding.textChoresSectionLabel,
+            binding.textNotesSectionLabel,
             binding.dashboardChoreRecyclerView,
             binding.dashboardNotesRecyclerView,
             binding.dashboardHousemateRecyclerView
@@ -570,6 +574,7 @@ class DashboardActivity : AppCompatActivity() {
             binding.buttonViewAllChores,
             binding.buttonViewAllNotes,
             binding.textChoresSectionLabel,
+            binding.textNotesSectionLabel,
             binding.dashboardChoreRecyclerView,
             binding.dashboardNotesRecyclerView,
             binding.dashboardHousemateRecyclerView

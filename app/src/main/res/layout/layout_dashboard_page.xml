@@ -382,7 +382,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:fontFamily="@font/open_sans"
-        android:text="Today &amp; Overdue"
+        android:text="Due Today and/or Overdue"
         android:textColor="#666666"
         android:textSize="15sp"
         android:visibility="gone"
@@ -401,6 +401,19 @@
         android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_new_note" />
+
+    <TextView
+        android:id="@+id/text_notes_section_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:fontFamily="@font/open_sans"
+        android:text="Posted this week"
+        android:textColor="#666666"
+        android:textSize="15sp"
+        android:visibility="visible"
+        app:layout_constraintBaseline_toBaselineOf="@+id/button_view_all_notes"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dashboardChoreRecyclerView"

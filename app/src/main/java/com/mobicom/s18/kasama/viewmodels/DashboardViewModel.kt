@@ -128,30 +128,36 @@ class DashboardViewModel(
             try {
                 noteRepository.syncNotesFromFirestore(householdId)
                 noteRepository.getNotesByHousehold(householdId).collect { noteEntities ->
-                    // Get notes from the last 7 days
+                    // Calculate start of current week (Monday)
+                    val now = Calendar.getInstance()
+                    val startOfWeek = Calendar.getInstance().apply {
+                        set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+
+                    // Filter notes from this week
+                    val thisWeekNotes = noteEntities.filter { it.createdAt >= startOfWeek.timeInMillis }
+
+                    // Update recent notes count (last 7 days for the info card)
                     val sevenDaysAgo = System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000)
                     val recentNotes = noteEntities.filter { it.createdAt >= sevenDaysAgo }
-
                     _recentNotesCount.value = recentNotes.size
 
-                    // Define a date formatter
+                    // Format notes for display
                     val noteDateFormat = SimpleDateFormat("MMM dd", Locale.ENGLISH)
-
-                    val noteUIs = noteEntities.take(6).map { note ->
-                        // --- THIS IS THE FIX ---
-                        // 1. Get creator name
+                    val noteUIs = thisWeekNotes.take(6).map { note ->
                         val creator = userRepository.getUserById(note.createdBy).getOrNull()
                         val creatorName = creator?.displayName ?: "Unknown"
-
-                        // 2. Format date
                         val createdAtFormatted = noteDateFormat.format(Date(note.createdAt))
 
-                        // 3. Create the complete NoteUI object
                         NoteUI(
                             id = note.id,
                             title = note.title,
                             content = note.content,
-                            createdBy = creatorName, // <-- Author is now included
+                            createdBy = creatorName,
                             createdAt = createdAtFormatted,
                             isSynced = note.isSynced
                         )
