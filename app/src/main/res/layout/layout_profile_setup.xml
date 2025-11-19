@@ -25,12 +25,33 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/edittext_phone_num" />
 
+
+    <EditText
+        android:id="@+id/edittext_name"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="30dp"
+        android:background="@drawable/rounded_button_outline_dark"
+        android:drawableStart="@drawable/birthday_icon_scaled"
+        android:drawablePadding="8dp"
+        android:fontFamily="@font/open_sans"
+        android:hint="Name"
+        android:inputType="text"
+        android:textColor="#133C3D"
+        android:textSize="16sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_sub" />
+
     <EditText
         android:id="@+id/edittext_birthdate"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginStart="30dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="30dp"
         android:background="@drawable/rounded_button_outline_dark"
         android:drawableStart="@drawable/birthday_icon_scaled"
@@ -42,8 +63,7 @@
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_sub" />
-
+        app:layout_constraintTop_toBottomOf="@+id/edittext_name" />
 
     <EditText
         android:id="@+id/edittext_phone_num"
@@ -117,5 +137,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_hello_msg" />
+
+    <ProgressBar
+        android:id="@+id/progressBarUpload"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/image_profile_icon"
+        app:layout_constraintEnd_toEndOf="@+id/image_profile_icon"
+        app:layout_constraintStart_toStartOf="@+id/image_profile_icon"
+        app:layout_constraintTop_toTopOf="@+id/image_profile_icon" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

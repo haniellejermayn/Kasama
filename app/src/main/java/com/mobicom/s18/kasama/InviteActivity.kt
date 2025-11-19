@@ -10,6 +10,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.mobicom.s18.kasama.databinding.LayoutInvitePageBinding
 import kotlinx.coroutines.launch
+import android.graphics.Bitmap
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
+import com.google.zxing.common.BitMatrix
 
 class InviteActivity : AppCompatActivity() {
     private lateinit var viewBinding: LayoutInvitePageBinding
@@ -88,13 +92,15 @@ class InviteActivity : AppCompatActivity() {
         viewBinding.codeTv.text = inviteCode
         viewBinding.linkTv.text = "kasama.app/join/$inviteCode"
 
-        // TODO: Generate QR code
+        val qrBitmap = generateQRCode(inviteCode)
+        viewBinding.qrImg.setImageBitmap(qrBitmap)
     }
 
     private fun setupListeners() {
         viewBinding.goHomeBtn.setOnClickListener {
             val dashboardIntent = Intent(this, DashboardActivity::class.java)
-            dashboardIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            dashboardIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+
             startActivity(dashboardIntent)
             finish()
         }
@@ -139,5 +145,26 @@ class InviteActivity : AppCompatActivity() {
             )
         }
         startActivity(Intent.createChooser(shareIntent, "Share household invite"))
+    }
+
+    fun generateQRCode(text: String, size: Int = 512): Bitmap {
+        val bitMatrix: BitMatrix = MultiFormatWriter().encode(
+            text,
+            BarcodeFormat.QR_CODE,
+            size,
+            size
+        )
+
+        val width = bitMatrix.width
+        val height = bitMatrix.height
+        var bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+
+        for (x in 0 until width) {
+            for (y in 0 until height) {
+                bmp.setPixel(x, y, if (bitMatrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+            }
+        }
+
+        return bmp
     }
 }

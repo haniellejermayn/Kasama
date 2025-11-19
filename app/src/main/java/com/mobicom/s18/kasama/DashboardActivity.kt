@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -38,12 +39,8 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var choreAdapter: ChoreAdapter
     private lateinit var noteAdapter: NoteAdapter
     private lateinit var housemateAdapter: HousemateAdapter
-    private lateinit var householdAdapter: HouseholdAdapter
 
     private var currentTab = Tab.CHORES
-    private var isSideTabOpen = false
-    private lateinit var dimView: View
-    private lateinit var sideTab: ConstraintLayout
 
     private val viewModel: DashboardViewModel by viewModels {
         val app = application as KasamaApplication
@@ -76,7 +73,6 @@ class DashboardActivity : AppCompatActivity() {
         loadUserData()
 
         showTab(Tab.CHORES, animate = false)
-        setupSideTab()
 
         // Request notification permission
         if (!PermissionHelper.checkNotificationPermission(this)) {
@@ -172,23 +168,17 @@ class DashboardActivity : AppCompatActivity() {
             val userResult = app.userRepository.getUserById(userId)
             if (userResult.isSuccess) {
                 val user = userResult.getOrNull()
+
+                if (user?.householdId == null) {
+                    val i = Intent(this@DashboardActivity, DashboardEmptyActivity::class.java)
+                    startActivity(i)
+                }
+
                 val householdId = user?.householdId
                 currentHouseholdId = householdId
 
-                // Update side tab user info
-                binding.textSideTabName.text = user?.displayName ?: "User"
-
-                // Load profile picture
-                if (user?.profilePictureUrl != null) {
-                    Glide.with(this@DashboardActivity)
-                        .load(user.profilePictureUrl)
-                        .circleCrop()
-                        .placeholder(R.drawable.kasama_profile_default)
-                        .error(R.drawable.kasama_profile_default)
-                        .into(binding.imageSideTabProfile)
-                } else {
-                    binding.imageSideTabProfile.setImageResource(R.drawable.kasama_profile_default)
-                }
+                val currHousehold = app.householdRepository.getHouseholdById(householdId.toString()).getOrNull()
+                binding.textDashboardHeader.text = "${currHousehold?.name}"
 
                 if (householdId != null) {
                     viewModel.loadDashboardData(householdId, userId)
@@ -237,6 +227,7 @@ class DashboardActivity : AppCompatActivity() {
             currentHouseholdId?.let { householdId ->
                 viewModel.toggleChoreCompletion(chore.id, householdId)
             }
+
         }
 
         noteAdapter = NoteAdapter(mutableListOf())
@@ -300,78 +291,6 @@ class DashboardActivity : AppCompatActivity() {
                 binding.recentNotesCount.text = count.toString()
             }
         }
-    }
-
-    private fun setupSideTab() {
-        val rootLayout = binding.dashboardPage
-        sideTab = binding.sideTab
-
-        dimView = View(this).apply {
-            setBackgroundColor(Color.parseColor("#80000000"))
-            visibility = View.GONE
-            isClickable = true
-            setOnClickListener { hideSideTab() }
-        }
-
-        rootLayout.addView(dimView, ConstraintLayout.LayoutParams(
-            ConstraintLayout.LayoutParams.MATCH_PARENT,
-            ConstraintLayout.LayoutParams.MATCH_PARENT
-        ))
-        dimView.bringToFront()
-
-        val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
-            private val SWIPE_THRESHOLD = 100
-            private val SWIPE_VELOCITY_THRESHOLD = 100
-
-            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
-                if (e1 == null) return false
-                val diffX = e2.x - e1.x
-                val diffY = e2.y - e1.y
-
-                if (Math.abs(diffX) > Math.abs(diffY)) {
-                    if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                        if (diffX > 0 && !isSideTabOpen) showSideTab()
-                        else if (diffX < 0 && isSideTabOpen) hideSideTab()
-                        return true
-                    }
-                }
-                return false
-            }
-        })
-
-        rootLayout.setOnTouchListener { _, event ->
-            gestureDetector.onTouchEvent(event)
-            true
-        }
-
-        binding.dashboardPage.setOnClickListener {
-            if (isSideTabOpen) hideSideTab()
-        }
-    }
-
-    private fun showSideTab() {
-        dimView.visibility = View.VISIBLE
-        dimView.alpha = 0f
-        dimView.animate().alpha(1f).setDuration(300).start()
-        dimView.elevation = 100f
-
-        sideTab.bringToFront()
-        dimView.bringToFront()
-        sideTab.visibility = View.VISIBLE
-        sideTab.animate().translationX(0f).setDuration(300).start()
-
-        isSideTabOpen = true
-    }
-
-    private fun hideSideTab() {
-        dimView.animate().alpha(0f).setDuration(300).withEndAction {
-            dimView.visibility = View.GONE
-        }.start()
-
-        sideTab.animate().translationX(-sideTab.width.toFloat()).setDuration(300)
-            .withEndAction { sideTab.visibility = View.GONE }.start()
-
-        isSideTabOpen = false
     }
 
     private fun setupTabListeners() {
@@ -477,6 +396,16 @@ class DashboardActivity : AppCompatActivity() {
         binding.logOut.setOnLongClickListener {
             showTestNotificationMenu()
             true
+        }
+
+        binding.buttonHome.setOnClickListener {
+            val menuIntent = Intent(this, MenuActivity::class.java)
+            startActivity(menuIntent)
+        }
+
+        binding.settings.setOnClickListener {
+            val settingsIntent = Intent(this, SettingsActivity::class.java)
+            startActivity(settingsIntent)
         }
     }
 

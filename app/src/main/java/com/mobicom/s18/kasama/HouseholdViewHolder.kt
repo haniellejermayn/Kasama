@@ -1,14 +1,16 @@
 package com.mobicom.s18.kasama
 
-import android.view.View
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.mobicom.s18.kasama.data.local.entities.Household
+import com.mobicom.s18.kasama.databinding.LayoutItemHouseholdBinding
+import com.mobicom.s18.kasama.models.HouseholdUI
 
-class HouseholdViewHolder(itemView: View): ViewHolder(itemView) {
-    private val name: TextView = itemView.findViewById(R.id.text_household_name)
+class HouseholdViewHolder(
+    private val binding: LayoutItemHouseholdBinding
+) : RecyclerView.ViewHolder(binding.root) {
 
-    fun bindHouseholdData(house: Household) {
-        name.text = house.name
+    fun bindHouseholdData(house: HouseholdUI) {
+        binding.textHouseholdName.text = house.name
     }
 }

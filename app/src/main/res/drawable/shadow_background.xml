@@ -2,12 +2,12 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Shadow layer -->
-    <item android:right="0dp" android:bottom="40dp">
+    <!--<item android:right="0dp" android:bottom="40dp">
         <shape android:shape="rectangle">
-            <solid android:color="#40000000"/> <!-- 25% black -->
-            <corners android:radius="12dp"/> <!-- match border radius -->
+            <solid android:color="#40000000"/>
+            <corners android:radius="12dp"/>
         </shape>
-    </item>
+    </item>-->
 
     <!-- Foreground layer with colored border -->
     <item>
