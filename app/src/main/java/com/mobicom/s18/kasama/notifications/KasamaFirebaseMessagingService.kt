@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+// TODO: Only notify when another person is assigned, don't notify self-assignment
 class KasamaFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {

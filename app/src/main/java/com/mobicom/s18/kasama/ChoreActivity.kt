@@ -14,6 +14,7 @@ import com.mobicom.s18.kasama.utils.showChoreBottomSheet
 import com.mobicom.s18.kasama.viewmodels.ChoreViewModel
 import kotlinx.coroutines.launch
 
+// TODO: Show overdue chores
 class ChoreActivity : AppCompatActivity() {
 
     private lateinit var binding: LayoutChorePageBinding

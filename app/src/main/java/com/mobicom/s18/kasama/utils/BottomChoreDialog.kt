@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+// TODO: implement offline-first chore creation through this dialog ui (cache assignees)
+
 fun showChoreBottomSheet(
     context: Context,
     availableHousemates: List<String>,
