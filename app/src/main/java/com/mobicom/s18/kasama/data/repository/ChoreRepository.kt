@@ -188,6 +188,10 @@ class ChoreRepository(
         return database.choreDao().getChoresByHousehold(householdId)
     }
 
+    fun getActiveChoresByHousehold(householdId: String): Flow<List<com.mobicom.s18.kasama.data.local.entities.Chore>> {
+        return database.choreDao().getActiveChoresByHousehold(householdId)
+    }
+
     suspend fun syncChoresFromFirestore(householdId: String) {
         try {
             val snapshot = firestore.collection("households")

@@ -51,7 +51,7 @@ class ChoreViewModel(
             _isLoading.value = true
             try {
                 choreRepository.syncChoresFromFirestore(householdId)
-                choreRepository.getChoresByHousehold(householdId).collect { choreEntities ->
+                choreRepository.getActiveChoresByHousehold(householdId).collect { choreEntities ->
                     val choreUIs = choreEntities.map { chore ->
                         val assignedUser = userRepository.getUserById(chore.assignedTo).getOrNull()
                         ChoreUI(
@@ -74,14 +74,13 @@ class ChoreViewModel(
         }
     }
 
-    // NEW function to load chores grouped by user
     fun loadChoresGroupedByUser(householdId: String, currentUserId: String) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 choreRepository.syncChoresFromFirestore(householdId)
-                choreRepository.getChoresByHousehold(householdId).collect { choreEntities ->
-                    // Group chores by assignee
+                choreRepository.getActiveChoresByHousehold(householdId).collect { choreEntities ->
+                    // group chores by assignee
                     val groupedChores = choreEntities.groupBy { it.assignedTo }
 
                     val sections = groupedChores.map { (userId, chores) ->
@@ -103,7 +102,7 @@ class ChoreViewModel(
                             chores = choreUIs,
                             isCurrentUser = userId == currentUserId
                         )
-                    }.sortedByDescending { it.isCurrentUser } // Current user's chores first
+                    }.sortedByDescending { it.isCurrentUser } // current user's chores first
 
                     _choreSections.value = sections
                     _isLoading.value = false
@@ -115,7 +114,6 @@ class ChoreViewModel(
         }
     }
 
-    // NEW function to filter the grouped chores
     fun filterChoresByFrequencyGrouped(frequency: String): List<ChoreSection> {
         val today = Calendar.getInstance()
         today.set(Calendar.HOUR_OF_DAY, 0)
@@ -148,10 +146,9 @@ class ChoreViewModel(
             }
 
             section.copy(chores = filteredChores)
-        }.filter { it.chores.isNotEmpty() } // Only show sections with chores
+        }.filter { it.chores.isNotEmpty() } // only show sections with chores
     }
 
-    // NEW function to calculate progress for the grouped/filtered view
     fun calculateProgressForFilter(frequency: String) {
         val sections = filterChoresByFrequencyGrouped(frequency)
         val allChores = sections.flatMap { it.chores }

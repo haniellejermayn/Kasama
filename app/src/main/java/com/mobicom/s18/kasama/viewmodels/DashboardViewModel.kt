@@ -65,8 +65,8 @@ class DashboardViewModel(
             _isLoading.value = true
             try {
                 choreRepository.syncChoresFromFirestore(householdId)
-                choreRepository.getChoresByHousehold(householdId).collect { choreEntities ->
-                    // Filter to only show current user's chores
+                choreRepository.getActiveChoresByHousehold(householdId).collect { choreEntities ->
+                    // filter to only show current user's chores
                     val userChores = choreEntities.filter { it.assignedTo == currentUserId }
 
                     val choreUIs = userChores.take(4).map { chore ->
@@ -155,7 +155,7 @@ class DashboardViewModel(
                             val user = userResult.getOrNull()
 
                             if (user != null) {
-                                val allChores = choreRepository.getChoresByHousehold(householdId).first()
+                                val allChores = choreRepository.getActiveChoresByHousehold(householdId).first()
                                 val userChores = allChores.filter { it.assignedTo == userId && !it.isCompleted }
 
                                 HousemateUI(
