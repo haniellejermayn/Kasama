@@ -86,6 +86,7 @@ class ChoreViewModel(
 
                     val sections = groupedChores.map { (userId, chores) ->
                         val user = userRepository.getUserById(userId).getOrNull()
+
                         val choreUIs = chores.map { chore ->
                             ChoreUI(
                                 id = chore.id,
@@ -97,13 +98,26 @@ class ChoreViewModel(
                             )
                         }
 
+                        val sortedChores = choreUIs.sortedWith(compareBy<ChoreUI> { it.isCompleted } // incomplete first
+                            .thenComparator { a, b ->
+                                val dateA = dateFormat.parse(a.dueDate)?.time ?: 0L
+                                val dateB = dateFormat.parse(b.dueDate)?.time ?: 0L
+
+                                when {
+                                    !a.isCompleted && !b.isCompleted -> dateA.compareTo(dateB) // incomplete ASC
+                                    a.isCompleted && b.isCompleted -> dateB.compareTo(dateA)    // completed DESC
+                                    else -> 0
+                                }
+                            }
+                        )
+
                         ChoreSection(
                             userName = user?.displayName ?: "Unknown",
                             userId = userId,
-                            chores = choreUIs,
+                            chores = sortedChores,
                             isCurrentUser = userId == currentUserId
                         )
-                    }.sortedByDescending { it.isCurrentUser } // current user's chores first
+                    }.sortedByDescending { it.isCurrentUser }
 
                     _choreSections.value = sections
                     _isLoading.value = false
