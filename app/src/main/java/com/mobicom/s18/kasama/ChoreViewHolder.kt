@@ -30,12 +30,20 @@ class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerVie
 
         // Update UI based on completion status
         if (chore.isCompleted) {
-            binding.choreItemStrikethrough.visibility = View.VISIBLE
+            // Apply native strikethrough
+            binding.choreItemName.paintFlags =
+                binding.choreItemName.paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+
+            // Optional: slightly dim the text
             binding.choreItemName.setTextColor("#B2133C3D".toColorInt())
-            binding.choreItemDueDate.visibility = View.GONE
+            binding.choreItemDueDate.setTextColor("#B2666666".toColorInt())
+            binding.choreItemDueDate.setTypeface(null, android.graphics.Typeface.NORMAL)
             binding.buttonChoreItem.setImageResource(R.drawable.checkmark_true)
         } else {
-            binding.choreItemStrikethrough.visibility = View.GONE
+            // Remove strikethrough
+            binding.choreItemName.paintFlags =
+                binding.choreItemName.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
+
             binding.choreItemName.setTextColor("#000000".toColorInt())
             binding.choreItemDueDate.visibility = View.VISIBLE
             binding.buttonChoreItem.setImageResource(R.drawable.checkmark)
