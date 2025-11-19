@@ -39,6 +39,11 @@ class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerVie
             binding.choreItemDueDate.setTextColor("#B2666666".toColorInt())
             binding.choreItemDueDate.setTypeface(null, android.graphics.Typeface.NORMAL)
             binding.buttonChoreItem.setImageResource(R.drawable.checkmark_true)
+
+            // TODO: disable uncompleted chores for recurring chores for now, fix the uncomplete function next time
+            val isRecurring = chore.frequency != "Never" && chore.frequency.isNotBlank()
+            binding.buttonChoreItem.isEnabled = !isRecurring
+            binding.buttonChoreItem.alpha = if (isRecurring) 0.5f else 1.0f
         } else {
             // Remove strikethrough
             binding.choreItemName.paintFlags =
