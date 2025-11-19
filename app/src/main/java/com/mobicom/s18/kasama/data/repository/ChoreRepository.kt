@@ -192,6 +192,11 @@ class ChoreRepository(
         return database.choreDao().getActiveChoresByHousehold(householdId)
     }
 
+    fun getActiveChoresWithRecentCompleted(householdId: String): Flow<List<com.mobicom.s18.kasama.data.local.entities.Chore>> {
+        val cutoffTime = System.currentTimeMillis() - (24 * 60 * 60 * 1000) // 24 hours
+        return database.choreDao().getActiveChoresWithRecentCompleted(householdId, cutoffTime)
+    }
+
     suspend fun syncChoresFromFirestore(householdId: String) {
         try {
             val snapshot = firestore.collection("households")

@@ -138,7 +138,7 @@
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="12dp"
             android:fontFamily="@font/open_sans_bold"
-            android:text="has been super productive!"
+            android:text="has been productive!"
             android:textAlignment="center"
             android:textColor="#FDFDFD"
             android:textSize="12sp"
@@ -368,12 +368,26 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
+        android:layout_marginEnd="12dp"
         android:fontFamily="@font/open_sans"
         android:text="View All Chores"
         android:textSize="15sp"
         android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="@+id/button_new_chore"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_new_chore" />
+
+    <TextView
+        android:id="@+id/text_chores_section_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:fontFamily="@font/open_sans"
+        android:text="Today &amp; Overdue"
+        android:textColor="#666666"
+        android:textSize="15sp"
+        android:visibility="gone"
+        app:layout_constraintBaseline_toBaselineOf="@+id/button_view_all_chores"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/button_view_all_notes"
@@ -393,12 +407,12 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="12dp"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_view_all_chores" />
+        app:layout_constraintTop_toBottomOf="@+id/text_chores_section_label" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dashboardNotesRecyclerView"

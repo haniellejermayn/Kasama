@@ -80,7 +80,7 @@ class ChoreViewModel(
             _isLoading.value = true
             try {
                 choreRepository.syncChoresFromFirestore(householdId)
-                choreRepository.getActiveChoresByHousehold(householdId).collect { choreEntities ->
+                choreRepository.getActiveChoresWithRecentCompleted(householdId).collect { choreEntities ->
                     // group chores by assignee
                     val groupedChores = choreEntities.groupBy { it.assignedTo }
 

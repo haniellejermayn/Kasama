@@ -26,6 +26,20 @@ interface ChoreDao {
     """)
     fun getActiveChoresByHousehold(householdId: String): Flow<List<Chore>>
 
+    @Query("""
+        SELECT * FROM chores 
+        WHERE householdId = :householdId
+        AND (isCompleted = 0 OR frequency IS NULL OR frequency = 'never' 
+             OR (isCompleted = 1 AND completedAt > :cutoffTime))
+        ORDER BY 
+            CASE WHEN isCompleted = 1 THEN 1 ELSE 0 END,
+            dueDate ASC
+    """)
+    fun getActiveChoresWithRecentCompleted(
+        householdId: String,
+        cutoffTime: Long = System.currentTimeMillis() - (24 * 60 * 60 * 1000) // 24 hours ago
+    ): Flow<List<Chore>>
+
     @Query("SELECT * FROM chores WHERE householdId = :householdId AND isCompleted = 0 ORDER BY dueDate ASC")
     fun getIncompleteChores(householdId: String): Flow<List<Chore>>
 

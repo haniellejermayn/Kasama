@@ -500,6 +500,7 @@ class DashboardActivity : AppCompatActivity() {
             Tab.CHORES -> {
                 binding.buttonNewChore.isVisible = true
                 binding.buttonViewAllChores.isVisible = true
+                binding.textChoresSectionLabel.isVisible = true
                 binding.dashboardChoreRecyclerView.isVisible = true
 
                 binding.buttonNewNote.isVisible = false
@@ -515,6 +516,7 @@ class DashboardActivity : AppCompatActivity() {
 
                 binding.buttonNewChore.isVisible = false
                 binding.buttonViewAllChores.isVisible = false
+                binding.textChoresSectionLabel.isVisible = false
                 binding.dashboardChoreRecyclerView.isVisible = false
                 binding.buttonInviteMember.isVisible = false
                 binding.dashboardHousemateRecyclerView.isVisible = false
@@ -525,6 +527,7 @@ class DashboardActivity : AppCompatActivity() {
 
                 binding.buttonNewChore.isVisible = false
                 binding.buttonViewAllChores.isVisible = false
+                binding.textChoresSectionLabel.isVisible = false
                 binding.dashboardChoreRecyclerView.isVisible = false
                 binding.buttonNewNote.isVisible = false
                 binding.buttonViewAllNotes.isVisible = false
@@ -540,6 +543,7 @@ class DashboardActivity : AppCompatActivity() {
             binding.buttonInviteMember,
             binding.buttonViewAllChores,
             binding.buttonViewAllNotes,
+            binding.textChoresSectionLabel,
             binding.dashboardChoreRecyclerView,
             binding.dashboardNotesRecyclerView,
             binding.dashboardHousemateRecyclerView
@@ -565,6 +569,7 @@ class DashboardActivity : AppCompatActivity() {
             binding.buttonInviteMember,
             binding.buttonViewAllChores,
             binding.buttonViewAllNotes,
+            binding.textChoresSectionLabel,
             binding.dashboardChoreRecyclerView,
             binding.dashboardNotesRecyclerView,
             binding.dashboardHousemateRecyclerView

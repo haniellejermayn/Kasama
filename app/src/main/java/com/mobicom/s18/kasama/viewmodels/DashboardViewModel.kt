@@ -65,7 +65,7 @@ class DashboardViewModel(
             _isLoading.value = true
             try {
                 choreRepository.syncChoresFromFirestore(householdId)
-                choreRepository.getActiveChoresByHousehold(householdId).collect { choreEntities ->
+                choreRepository.getActiveChoresWithRecentCompleted(householdId).collect { choreEntities ->
                     val userChores = choreEntities.filter { it.assignedTo == currentUserId }
 
                     val today = Calendar.getInstance()
@@ -74,10 +74,23 @@ class DashboardViewModel(
                     today.set(Calendar.SECOND, 0)
                     today.set(Calendar.MILLISECOND, 0)
 
-                    val choreUIs = userChores.take(4).map { chore ->
+                    // DASHBOARD FILTERING: Only show chores due today or overdue
+                    // This keeps the dashboard focused on urgent/actionable items
+                    val filteredChores = userChores.filter { chore ->
+                        val choreDate = Calendar.getInstance().apply {
+                            timeInMillis = chore.dueDate
+                            set(Calendar.HOUR_OF_DAY, 0)
+                            set(Calendar.MINUTE, 0)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
+                        // Include if: overdue OR due today
+                        choreDate.before(today) || choreDate.equals(today)
+                    }
+
+                    val choreUIs = filteredChores.take(4).map { chore ->
                         val assignedUser = userRepository.getUserById(chore.assignedTo).getOrNull()
                         val isOverdue = chore.dueDate < today.timeInMillis && !chore.isCompleted
-
                         ChoreUI(
                             id = chore.id,
                             title = chore.title,
@@ -89,8 +102,7 @@ class DashboardViewModel(
                         )
                     }
                     _chores.value = choreUIs
-
-                    updateProgress(userChores.map { chore ->
+                    updateProgress(filteredChores.map { chore ->
                         val isOverdue = chore.dueDate < today.timeInMillis && !chore.isCompleted
                         ChoreUI(
                             id = chore.id,
