@@ -74,8 +74,9 @@ class DashboardViewModel(
                     today.set(Calendar.SECOND, 0)
                     today.set(Calendar.MILLISECOND, 0)
 
-                    // DASHBOARD FILTERING: Only show chores due today or overdue
-                    // This keeps the dashboard focused on urgent/actionable items
+                    // DASHBOARD FILTERING RULES:
+                    // 1. Show incomplete chores that are overdue OR due today
+                    // 2. Show completed chores that are due today only
                     val filteredChores = userChores.filter { chore ->
                         val choreDate = Calendar.getInstance().apply {
                             timeInMillis = chore.dueDate
@@ -84,13 +85,30 @@ class DashboardViewModel(
                             set(Calendar.SECOND, 0)
                             set(Calendar.MILLISECOND, 0)
                         }
-                        // Include if: overdue OR due today
-                        choreDate.before(today) || choreDate.equals(today)
+
+                        val isDueToday = choreDate.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                                choreDate.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+                        val isOverdue = choreDate.before(today)
+
+                        when {
+                            // Completed chores: only show if due today
+                            chore.isCompleted -> isDueToday
+                            // Incomplete chores: show if overdue OR due today
+                            else -> isOverdue || isDueToday
+                        }
                     }
 
-                    val choreUIs = filteredChores.take(4).map { chore ->
+                    val choreUIs = filteredChores.map { chore ->
                         val assignedUser = userRepository.getUserById(chore.assignedTo).getOrNull()
-                        val isOverdue = chore.dueDate < today.timeInMillis && !chore.isCompleted
+                        val choreDate = Calendar.getInstance().apply {
+                            timeInMillis = chore.dueDate
+                            set(Calendar.HOUR_OF_DAY, 0)
+                            set(Calendar.MINUTE, 0)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
+                        val isOverdue = choreDate.before(today) && !chore.isCompleted
+
                         ChoreUI(
                             id = chore.id,
                             title = chore.title,
@@ -101,19 +119,11 @@ class DashboardViewModel(
                             isOverdue = isOverdue
                         )
                     }
+
                     _chores.value = choreUIs
-                    updateProgress(filteredChores.map { chore ->
-                        val isOverdue = chore.dueDate < today.timeInMillis && !chore.isCompleted
-                        ChoreUI(
-                            id = chore.id,
-                            title = chore.title,
-                            dueDate = dateFormat.format(Date(chore.dueDate)),
-                            frequency = chore.frequency ?: "Never",
-                            assignedToNames = emptyList(),
-                            isCompleted = chore.isCompleted,
-                            isOverdue = isOverdue
-                        )
-                    })
+
+                    // Update progress based on all filtered chores
+                    updateProgress(choreUIs)
                     _isLoading.value = false
                 }
             } catch (e: Exception) {
