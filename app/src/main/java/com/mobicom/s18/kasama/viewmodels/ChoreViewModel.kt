@@ -25,7 +25,8 @@ class ChoreViewModel(
         val userName: String,
         val userId: String,
         val chores: List<ChoreUI>,
-        val isCurrentUser: Boolean
+        val isCurrentUser: Boolean,
+        val isOverdue: Boolean = false
     )
 
     private val _chores = MutableStateFlow<List<ChoreUI>>(emptyList())
@@ -137,6 +138,7 @@ class ChoreViewModel(
                         "today" -> isSameDay(today, dueCal)
                         "this week" -> isSameWeek(today, dueCal)
                         "this month" -> isSameMonth(today, dueCal)
+                        "overdue" -> dueCal.before(today) && !chore.isCompleted
                         "all" -> true
                         else -> false
                     }
@@ -145,8 +147,11 @@ class ChoreViewModel(
                 }
             }
 
-            section.copy(chores = filteredChores)
-        }.filter { it.chores.isNotEmpty() } // only show sections with chores
+            section.copy(
+                chores = filteredChores,
+                isOverdue = frequency == "overdue"
+            )
+        }.filter { it.chores.isNotEmpty() }
     }
 
     fun calculateProgressForFilter(frequency: String) {

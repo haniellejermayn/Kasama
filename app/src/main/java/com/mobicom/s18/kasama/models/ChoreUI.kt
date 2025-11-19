@@ -7,5 +7,6 @@ data class ChoreUI(
     val frequency: String,
     val assignedToNames: List<String>,
     var isCompleted: Boolean,
-    val isSynced: Boolean = true
+    val isSynced: Boolean = true,
+    val isOverdue: Boolean = false
 )

@@ -72,6 +72,33 @@
             app:layout_constraintTop_toBottomOf="@+id/text_option_today" />
 
         <TextView
+            android:id="@+id/text_option_overdue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:fontFamily="@font/open_sans_bold"
+            android:padding="8dp"
+            android:text="Overdue"
+            android:textColor="#CCCCCC"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/text_option_today"
+            app:layout_constraintStart_toEndOf="@+id/text_option_today"
+            app:layout_constraintTop_toTopOf="@+id/text_option_today" />
+
+        <View
+            android:id="@+id/bottom_border_overdue"
+            android:layout_width="0dp"
+            android:layout_height="2dp"
+            android:background="#FFFFFF"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="@+id/text_option_overdue"
+            app:layout_constraintStart_toStartOf="@+id/text_option_overdue"
+            app:layout_constraintTop_toBottomOf="@+id/text_option_overdue" />
+
+        <TextView
             android:id="@+id/text_option_week"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -85,7 +112,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="@+id/text_option_today"
-            app:layout_constraintStart_toEndOf="@+id/text_option_today"
+            app:layout_constraintStart_toEndOf="@+id/text_option_overdue"
             app:layout_constraintTop_toTopOf="@+id/text_option_today" />
 
         <View
@@ -111,9 +138,9 @@
             android:textColor="#CCCCCC"
             android:textSize="14sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@+id/text_option_week"
+            app:layout_constraintBottom_toBottomOf="@+id/text_option_today"
             app:layout_constraintStart_toEndOf="@+id/text_option_week"
-            app:layout_constraintTop_toTopOf="@+id/text_option_week" />
+            app:layout_constraintTop_toTopOf="@+id/text_option_today" />
 
         <View
             android:id="@+id/bottom_border_month"
@@ -138,9 +165,9 @@
             android:textColor="#CCCCCC"
             android:textSize="14sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@+id/text_option_month"
+            app:layout_constraintBottom_toBottomOf="@+id/text_option_today"
             app:layout_constraintStart_toEndOf="@+id/text_option_month"
-            app:layout_constraintTop_toTopOf="@+id/text_option_month" />
+            app:layout_constraintTop_toTopOf="@+id/text_option_today" />
 
         <View
             android:id="@+id/bottom_border_all"
@@ -196,12 +223,31 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <TextView
+        android:id="@+id/empty_state_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
+        android:fontFamily="@font/open_sans"
+        android:gravity="center"
+        android:text="No chores today!"
+        android:textColor="#666666"
+        android:textSize="16sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/progress_container" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/choreRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         android:clipToPadding="false"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

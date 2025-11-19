@@ -12,7 +12,8 @@ class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerVie
         chore: ChoreUI,
         adapter: ChoreAdapter,
         onChoreClickListener: ((ChoreUI) -> Unit)?,
-        onChoreCompletedListener: ((ChoreUI) -> Unit)? = null
+        onChoreCompletedListener: ((ChoreUI) -> Unit)? = null,
+        isOverdueSection: Boolean = false
     ) {
         binding.choreItemName.text = chore.title
         binding.choreItemDueDate.text = chore.dueDate
@@ -38,6 +39,14 @@ class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerVie
             binding.choreItemName.setTextColor("#000000".toColorInt())
             binding.choreItemDueDate.visibility = View.VISIBLE
             binding.buttonChoreItem.setImageResource(R.drawable.checkmark)
+
+            if (isOverdueSection || chore.isOverdue) {
+                binding.choreItemDueDate.setTextColor(binding.root.context.getColor(android.R.color.holo_red_dark))
+                binding.choreItemDueDate.setTypeface(null, android.graphics.Typeface.BOLD)
+            } else {
+                binding.choreItemDueDate.setTextColor("#666666".toColorInt())
+                binding.choreItemDueDate.setTypeface(null, android.graphics.Typeface.NORMAL)
+            }
         }
 
         // Show frequency badge

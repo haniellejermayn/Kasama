@@ -56,15 +56,25 @@ class ChoreSectionViewHolder(
         binding.sectionUserName.text = section.userName
         binding.sectionChoreCount.text = "${section.chores.size} chore${if (section.chores.size != 1) "s" else ""}"
 
-        // Highlight current user's section
+        binding.sectionUserName.setTextColor(binding.root.context.getColor(android.R.color.black))
+        binding.sectionChoreCount.setTextColor(binding.root.context.getColor(android.R.color.darker_gray))
+
+        // highlight current user's section
         if (section.isCurrentUser) {
             binding.sectionUserName.setTextColor(binding.root.context.getColor(R.color.primary_color))
         }
 
-        // Setup nested RecyclerView for chores
+        // highlight overdue section
+        if (section.isOverdue) {
+            binding.sectionUserName.setTextColor(binding.root.context.getColor(android.R.color.holo_red_dark))
+            binding.sectionChoreCount.setTextColor(binding.root.context.getColor(android.R.color.holo_red_dark))
+        }
+
+        // setup nested RecyclerView for chores
         val choreAdapter = ChoreAdapter(section.chores)
         choreAdapter.setOnChoreClickListener(onChoreClickListener)
         choreAdapter.setOnChoreCompletedListener(onChoreCompletedListener)
+        choreAdapter.setIsOverdueSection(section.isOverdue)
 
         binding.sectionChoreRecyclerView.layoutManager = LinearLayoutManager(binding.root.context)
         binding.sectionChoreRecyclerView.adapter = choreAdapter

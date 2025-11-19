@@ -147,11 +147,35 @@ class ChoreActivity : AppCompatActivity() {
             updateDisplayedChores("all")
             highlightTab(binding.textOptionAll)
         }
+
+        binding.textOptionOverdue.setOnClickListener {
+            updateDisplayedChores("overdue")
+            highlightTab(binding.textOptionOverdue)
+        }
     }
 
     private fun updateDisplayedChores(filter: String) {
         currentFilter = filter
         val filteredSections = viewModel.filterChoresByFrequencyGrouped(filter)
+
+        // Show/hide empty state
+        if (filteredSections.isEmpty() || filteredSections.all { it.chores.isEmpty() }) {
+            binding.choreRecyclerView.visibility = View.GONE
+            binding.emptyStateText.visibility = View.VISIBLE
+
+            binding.emptyStateText.text = when (filter) {
+                "today" -> "No chores due today! 🎉\nCheck 'Overdue' for pending tasks."
+                "overdue" -> "No overdue chores! 🎊\nYou're all caught up!"
+                "this week" -> "No chores this week.\nEnjoy your free time!"
+                "this month" -> "No chores this month.\nTime to relax!"
+                "all" -> "No chores found.\nCreate one to get started!"
+                else -> "No chores found."
+            }
+        } else {
+            binding.choreRecyclerView.visibility = View.VISIBLE
+            binding.emptyStateText.visibility = View.GONE
+        }
+
         choreSectionAdapter.setSections(filteredSections)
         viewModel.calculateProgressForFilter(filter)
 
@@ -159,6 +183,7 @@ class ChoreActivity : AppCompatActivity() {
             "today" -> "Today"
             "this week" -> "This Week"
             "this month" -> "This Month"
+            "overdue" -> "Overdue"
             "all" -> "All Chores"
             else -> ""
         }
@@ -167,6 +192,7 @@ class ChoreActivity : AppCompatActivity() {
     private fun highlightTab(activeTextView: TextView) {
         val tabs = listOf(
             binding.textOptionToday to binding.bottomBorderToday,
+            binding.textOptionOverdue to binding.bottomBorderOverdue,
             binding.textOptionWeek to binding.bottomBorderWeek,
             binding.textOptionMonth to binding.bottomBorderMonth,
             binding.textOptionAll to binding.bottomBorderAll

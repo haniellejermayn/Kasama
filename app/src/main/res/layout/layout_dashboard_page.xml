@@ -117,27 +117,29 @@
 
         <TextView
             android:id="@+id/text_housemate"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:fontFamily="@font/open_sans_bold"
             android:text="Housemate"
+            android:textAlignment="center"
             android:textColor="#FDFDFD"
             android:textSize="14sp"
             android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/text_productivity"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="12dp"
             android:fontFamily="@font/open_sans_bold"
             android:text="has been super productive!"
-            android:textAlignment="viewStart"
+            android:textAlignment="center"
             android:textColor="#FDFDFD"
             android:textSize="12sp"
             android:textStyle="bold"
@@ -149,9 +151,10 @@
             android:id="@+id/active_profile_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal|center_vertical"
+            android:gravity="center"
             android:orientation="horizontal"
             app:layout_constraintBottom_toTopOf="@+id/text_productivity"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/text_housemate">
 
@@ -163,7 +166,7 @@
 
             <TextView
                 android:id="@+id/productive_housemate_name"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:fontFamily="@font/open_sans_bold"

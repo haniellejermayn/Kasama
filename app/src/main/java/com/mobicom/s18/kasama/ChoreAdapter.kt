@@ -11,6 +11,7 @@ class ChoreAdapter(private var choreData: List<ChoreUI>) : RecyclerView.Adapter<
 
     private var onChoreClickListener: ((ChoreUI) -> Unit)? = null
     private var onChoreCompletedListener: ((ChoreUI) -> Unit)? = null
+    private var isOverdueSection: Boolean = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChoreViewHolder {
         val binding = LayoutItemChoreBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -49,5 +50,9 @@ class ChoreAdapter(private var choreData: List<ChoreUI>) : RecyclerView.Adapter<
 
     fun setOnChoreCompletedListener(listener: ((ChoreUI) -> Unit)?) {
         onChoreCompletedListener = listener
+    }
+
+    fun setIsOverdueSection(isOverdue: Boolean) {
+        isOverdueSection = isOverdue
     }
 }

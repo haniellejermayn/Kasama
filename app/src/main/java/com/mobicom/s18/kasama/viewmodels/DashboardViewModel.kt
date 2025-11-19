@@ -66,31 +66,40 @@ class DashboardViewModel(
             try {
                 choreRepository.syncChoresFromFirestore(householdId)
                 choreRepository.getActiveChoresByHousehold(householdId).collect { choreEntities ->
-                    // filter to only show current user's chores
                     val userChores = choreEntities.filter { it.assignedTo == currentUserId }
+
+                    val today = Calendar.getInstance()
+                    today.set(Calendar.HOUR_OF_DAY, 0)
+                    today.set(Calendar.MINUTE, 0)
+                    today.set(Calendar.SECOND, 0)
+                    today.set(Calendar.MILLISECOND, 0)
 
                     val choreUIs = userChores.take(4).map { chore ->
                         val assignedUser = userRepository.getUserById(chore.assignedTo).getOrNull()
+                        val isOverdue = chore.dueDate < today.timeInMillis && !chore.isCompleted
+
                         ChoreUI(
                             id = chore.id,
                             title = chore.title,
                             dueDate = dateFormat.format(Date(chore.dueDate)),
                             frequency = chore.frequency ?: "Never",
                             assignedToNames = listOfNotNull(assignedUser?.displayName),
-                            isCompleted = chore.isCompleted
+                            isCompleted = chore.isCompleted,
+                            isOverdue = isOverdue
                         )
                     }
                     _chores.value = choreUIs
 
-                    // Update progress based on ALL user chores (not just top 4)
                     updateProgress(userChores.map { chore ->
+                        val isOverdue = chore.dueDate < today.timeInMillis && !chore.isCompleted
                         ChoreUI(
                             id = chore.id,
                             title = chore.title,
                             dueDate = dateFormat.format(Date(chore.dueDate)),
                             frequency = chore.frequency ?: "Never",
                             assignedToNames = emptyList(),
-                            isCompleted = chore.isCompleted
+                            isCompleted = chore.isCompleted,
+                            isOverdue = isOverdue
                         )
                     })
                     _isLoading.value = false
