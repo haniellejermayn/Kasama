@@ -18,6 +18,14 @@ interface ChoreDao {
     @Query("SELECT * FROM chores WHERE householdId = :householdId ORDER BY dueDate ASC")
     fun getChoresByHousehold(householdId: String): Flow<List<Chore>>
 
+    @Query("""
+        SELECT * FROM chores 
+        WHERE householdId = :householdId
+        AND (isCompleted = 0 OR frequency IS NULL OR frequency = 'never')
+        ORDER BY dueDate ASC
+    """)
+    fun getActiveChoresByHousehold(householdId: String): Flow<List<Chore>>
+
     @Query("SELECT * FROM chores WHERE householdId = :householdId AND isCompleted = 0 ORDER BY dueDate ASC")
     fun getIncompleteChores(householdId: String): Flow<List<Chore>>
 

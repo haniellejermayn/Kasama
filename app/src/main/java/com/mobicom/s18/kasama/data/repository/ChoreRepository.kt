@@ -5,9 +5,11 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
 import com.mobicom.s18.kasama.data.local.entities.PendingDelete
 import com.mobicom.s18.kasama.data.remote.models.FirebaseChore
+import com.mobicom.s18.kasama.utils.RecurringChoreHelper
 import com.mobicom.s18.kasama.workers.SyncWorker
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.first
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -27,7 +29,6 @@ class ChoreRepository(
     ): Result<FirebaseChore> {
         return try {
             val choreId = UUID.randomUUID().toString()
-
             val chore = FirebaseChore(
                 id = choreId,
                 householdId = householdId,
@@ -39,10 +40,7 @@ class ChoreRepository(
                 isCompleted = false
             )
 
-            // Save to Room with isSynced = false
             database.choreDao().insert(chore.toEntity(isSynced = false))
-
-            // Schedule sync
             scheduleSyncWork()
 
             Result.success(chore)
@@ -53,16 +51,112 @@ class ChoreRepository(
 
     suspend fun updateChore(chore: FirebaseChore): Result<Unit> {
         return try {
-            // Update Room with isSynced = false
             database.choreDao().update(
                 chore.toEntity(isSynced = false).copy(
                     lastModified = System.currentTimeMillis()
                 )
             )
-
-            // Schedule sync
             scheduleSyncWork()
 
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // handles recurring logic
+    suspend fun completeChore(choreId: String): Result<Unit> {
+        return try {
+            val chore = database.choreDao().getChoreByIdOnce(choreId)
+                ?: return Result.failure(Exception("Chore not found"))
+
+            // mark as completed
+            val completedChore = chore.copy(
+                isCompleted = true,
+                completedAt = System.currentTimeMillis(),
+                isSynced = false,
+                lastModified = System.currentTimeMillis()
+            )
+            database.choreDao().update(completedChore)
+
+            // if recurring, create next instance
+            if (RecurringChoreHelper.shouldCreateNextInstance(chore.frequency)) {
+                val nextDueDate = RecurringChoreHelper.calculateNextDueDate(
+                    chore.dueDate,
+                    chore.frequency
+                )
+
+                if (nextDueDate != null) {
+                    val nextChore = FirebaseChore(
+                        id = UUID.randomUUID().toString(),
+                        householdId = chore.householdId,
+                        title = chore.title,
+                        dueDate = nextDueDate,
+                        assignedTo = chore.assignedTo,
+                        frequency = chore.frequency,
+                        createdBy = chore.createdBy,
+                        isCompleted = false
+                    )
+
+                    database.choreDao().insert(nextChore.toEntity(isSynced = false))
+                }
+            }
+
+            scheduleSyncWork()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // also handles recurring chores
+    suspend fun uncompleteChore(choreId: String): Result<Unit> {
+        return try {
+            val chore = database.choreDao().getChoreByIdOnce(choreId)
+                ?: return Result.failure(Exception("Chore not found"))
+
+            // mark as not completed
+            val uncompletedChore = chore.copy(
+                isCompleted = false,
+                completedAt = null,
+                isSynced = false,
+                lastModified = System.currentTimeMillis()
+            )
+            database.choreDao().update(uncompletedChore)
+
+            // if recurring, delete next instance
+            if (RecurringChoreHelper.shouldCreateNextInstance(chore.frequency)) {
+                val nextDueDate = RecurringChoreHelper.calculateNextDueDate(
+                    chore.dueDate,
+                    chore.frequency
+                )
+
+                if (nextDueDate != null) {
+                    val allChores = database.choreDao()
+                        .getChoresByHousehold(chore.householdId)
+                        .first()
+
+                    val nextInstance = allChores.find {
+                        it.title == chore.title &&
+                                it.assignedTo == chore.assignedTo &&
+                                it.dueDate == nextDueDate &&
+                                !it.isCompleted
+                    }
+
+                    nextInstance?.let {
+                        database.choreDao().delete(it)
+                        database.pendingDeleteDao().insert(
+                            PendingDelete(
+                                itemId = it.id,
+                                itemType = "chore",
+                                householdId = it.householdId
+                            )
+                        )
+                    }
+                }
+            }
+
+            scheduleSyncWork()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -72,12 +166,8 @@ class ChoreRepository(
     suspend fun deleteChore(householdId: String, choreId: String): Result<Unit> {
         return try {
             val chore = database.choreDao().getChoreByIdOnce(choreId)
-
             if (chore != null) {
-                // Delete from Room immediately
                 database.choreDao().delete(chore)
-
-                // Track pending delete
                 database.pendingDeleteDao().insert(
                     PendingDelete(
                         itemId = choreId,
@@ -85,8 +175,6 @@ class ChoreRepository(
                         householdId = householdId
                     )
                 )
-
-                // Schedule sync
                 scheduleSyncWork()
             }
 
@@ -110,7 +198,6 @@ class ChoreRepository(
 
             val chores = snapshot.toObjects(FirebaseChore::class.java)
             chores.forEach { chore ->
-                // Only insert/update if not locally modified
                 val localChore = database.choreDao().getChoreByIdOnce(chore.id)
                 if (localChore == null || localChore.isSynced) {
                     database.choreDao().insert(chore.toEntity(isSynced = true))

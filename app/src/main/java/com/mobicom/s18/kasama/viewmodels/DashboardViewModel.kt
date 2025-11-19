@@ -214,26 +214,11 @@ class DashboardViewModel(
         viewModelScope.launch {
             try {
                 val choreEntity = database.choreDao().getChoreByIdOnce(choreId) ?: return@launch
-
-                val updatedChore = choreEntity.copy(
-                    isCompleted = !choreEntity.isCompleted,
-                    completedAt = if (!choreEntity.isCompleted) System.currentTimeMillis() else null
-                )
-
-                choreRepository.updateChore(
-                    com.mobicom.s18.kasama.data.remote.models.FirebaseChore(
-                        id = updatedChore.id,
-                        householdId = updatedChore.householdId,
-                        title = updatedChore.title,
-                        dueDate = updatedChore.dueDate,
-                        assignedTo = updatedChore.assignedTo,
-                        isCompleted = updatedChore.isCompleted,
-                        frequency = updatedChore.frequency,
-                        createdBy = updatedChore.createdBy,
-                        createdAt = updatedChore.createdAt,
-                        completedAt = updatedChore.completedAt
-                    )
-                )
+                if (choreEntity.isCompleted) {
+                    choreRepository.uncompleteChore(choreId)
+                } else {
+                    choreRepository.completeChore(choreId)
+                }
             } catch (e: Exception) {
                 _error.value = e.message
             }

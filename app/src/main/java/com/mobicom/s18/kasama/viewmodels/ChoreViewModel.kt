@@ -202,30 +202,13 @@ class ChoreViewModel(
     fun toggleChoreCompletion(choreId: String, householdId: String) {
         viewModelScope.launch {
             try {
-                // Get the chore entity from Room database
                 val choreEntity = database.choreDao().getChoreByIdOnce(choreId) ?: return@launch
 
-                // Toggle completion status
-                val updatedChore = choreEntity.copy(
-                    isCompleted = !choreEntity.isCompleted,
-                    completedAt = if (!choreEntity.isCompleted) System.currentTimeMillis() else null
-                )
-
-                // Convert to FirebaseChore and update
-                choreRepository.updateChore(
-                    com.mobicom.s18.kasama.data.remote.models.FirebaseChore(
-                        id = updatedChore.id,
-                        householdId = updatedChore.householdId,
-                        title = updatedChore.title,
-                        dueDate = updatedChore.dueDate,
-                        assignedTo = updatedChore.assignedTo,
-                        isCompleted = updatedChore.isCompleted,
-                        frequency = updatedChore.frequency,
-                        createdBy = updatedChore.createdBy,
-                        createdAt = updatedChore.createdAt,
-                        completedAt = updatedChore.completedAt
-                    )
-                )
+                if (choreEntity.isCompleted) {
+                    choreRepository.uncompleteChore(choreId)
+                } else {
+                    choreRepository.completeChore(choreId)
+                }
             } catch (e: Exception) {
                 _error.value = e.message
             }
