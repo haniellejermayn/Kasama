@@ -14,7 +14,13 @@ import com.mobicom.s18.kasama.utils.showChoreBottomSheet
 import com.mobicom.s18.kasama.viewmodels.ChoreViewModel
 import kotlinx.coroutines.launch
 
-// TODO: Show overdue chores
+// TODO: loading states for all activities
+// TODO: make clickable buttons more prominent
+// TODO: change UI of note, make it easier to read
+// TODO: notifications
+// TODO: make the filter thing funnel thing
+// TODO: color change (idk what)
+
 class ChoreActivity : AppCompatActivity() {
 
     private lateinit var binding: LayoutChorePageBinding
