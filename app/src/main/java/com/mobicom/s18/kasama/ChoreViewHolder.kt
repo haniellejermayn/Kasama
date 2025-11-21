@@ -1,5 +1,6 @@
 package com.mobicom.s18.kasama
 
+import android.graphics.Color
 import android.view.View
 import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.RecyclerView
@@ -56,6 +57,7 @@ class ChoreViewHolder(private val binding: LayoutItemChoreBinding) : RecyclerVie
             if (isOverdueSection || chore.isOverdue) {
                 binding.choreItemDueDate.setTextColor(binding.root.context.getColor(android.R.color.holo_red_dark))
                 binding.choreItemDueDate.setTypeface(null, android.graphics.Typeface.BOLD)
+                binding.elementChoreEntryCard.setCardBackgroundColor("#FFCCCC".toColorInt())
             } else {
                 binding.choreItemDueDate.setTextColor("#666666".toColorInt())
                 binding.choreItemDueDate.setTypeface(null, android.graphics.Typeface.NORMAL)
