@@ -364,7 +364,7 @@
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout3" />
 
     <TextView
-        android:id="@+id/button_view_all_chores"
+        android:id="@+id/button_view_all_chores_1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="6dp"
@@ -374,17 +374,17 @@
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@+id/text_chores_section_label_overdue"
         app:layout_constraintTop_toTopOf="@+id/text_chores_section_label_overdue"
-        app:layout_constraintEnd_toStartOf="@+id/icon_chores_arrow" />
+        app:layout_constraintEnd_toStartOf="@+id/icon_chores_arrow_1" />
 
     <ImageView
-        android:id="@+id/icon_chores_arrow"
+        android:id="@+id/icon_chores_arrow_1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="12dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/button_view_all_chores"
+        app:layout_constraintBottom_toBottomOf="@+id/button_view_all_chores_1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/button_view_all_chores"
+        app:layout_constraintTop_toTopOf="@+id/button_view_all_chores_1"
         app:srcCompat="@drawable/arrow" />
 
     <TextView
@@ -401,6 +401,30 @@
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_new_chore" />
+
+    <TextView
+        android:id="@+id/button_view_all_chores_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="6dp"
+        android:fontFamily="@font/open_sans"
+        android:text="View All Chores"
+        android:textSize="15sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/text_chores_section_label_today"
+        app:layout_constraintTop_toTopOf="@+id/text_chores_section_label_today"
+        app:layout_constraintEnd_toStartOf="@+id/icon_chores_arrow_2" />
+
+    <ImageView
+        android:id="@+id/icon_chores_arrow_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/button_view_all_chores_2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/button_view_all_chores_2"
+        app:srcCompat="@drawable/arrow" />
 
     <TextView
         android:id="@+id/text_chores_section_label_today"
