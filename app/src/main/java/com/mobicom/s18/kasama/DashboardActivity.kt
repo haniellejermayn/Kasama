@@ -586,11 +586,8 @@ class DashboardActivity : AppCompatActivity() {
         when (tab) {
             Tab.CHORES -> {
                 binding.buttonNewChore.isVisible = true
-                binding.buttonViewAllChores1.isVisible = true
-                binding.iconChoresArrow1.isVisible = true
                 binding.buttonViewAllChores2.isVisible = true
                 binding.iconChoresArrow2.isVisible = true
-                binding.textChoresSectionLabelOverdue.isVisible = true
                 binding.textChoresSectionLabelToday.isVisible = true
                 binding.dashboardChoreOverdueRecyclerView.isVisible = true
                 binding.dashboardChoreTodayRecyclerView.isVisible = true
