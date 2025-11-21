@@ -3,18 +3,13 @@ package com.mobicom.s18.kasama
 import android.animation.ObjectAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
-import android.view.GestureDetector
-import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -56,6 +51,7 @@ class DashboardActivity : AppCompatActivity() {
 
     private var currentHouseholdId: String? = null
     private var currentUserId: String? = null
+    private var currentUserPfp: String? = null
 
     enum class Tab {
         CHORES, NOTES, HOUSEMATES
@@ -170,9 +166,13 @@ class DashboardActivity : AppCompatActivity() {
             if (userResult.isSuccess) {
                 val user = userResult.getOrNull()
 
+                currentUserPfp = user?.profilePictureUrl
+
                 if (user?.householdId == null) {
                     val i = Intent(this@DashboardActivity, DashboardEmptyActivity::class.java)
                     startActivity(i)
+                    finish()
+                    return@launch
                 }
 
                 val householdId = user?.householdId
@@ -281,7 +281,7 @@ class DashboardActivity : AppCompatActivity() {
         todayChoreAdapter.setOnChoreCompletedListener(choreCompletedListener)
 
         noteAdapter = NoteAdapter(mutableListOf())
-        binding.dashboardNotesRecyclerView.layoutManager = GridLayoutManager(this, 3)
+        binding.dashboardNotesRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.dashboardNotesRecyclerView.adapter = noteAdapter
 
         housemateAdapter = HousemateAdapter(emptyList())
@@ -455,6 +455,7 @@ class DashboardActivity : AppCompatActivity() {
                 context = this,
                 householdId = householdId,
                 currentUserId = userId,
+                profilePictureUrl = currentUserPfp,
                 note = null,
                 onSave = {
                     viewModel.loadDashboardData(householdId, userId)

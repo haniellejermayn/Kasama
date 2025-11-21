@@ -8,6 +8,7 @@ import com.mobicom.s18.kasama.data.remote.models.FirebaseNote
 import com.mobicom.s18.kasama.workers.SyncWorker
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
+import java.lang.System
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -21,7 +22,8 @@ class NoteRepository(
         householdId: String,
         title: String,
         content: String,
-        createdBy: String
+        createdBy: String,
+        profilePictureUrl: String?
     ): Result<FirebaseNote> {
         return try {
             val noteId = UUID.randomUUID().toString()
@@ -31,7 +33,8 @@ class NoteRepository(
                 householdId = householdId,
                 title = title,
                 content = content,
-                createdBy = createdBy
+                createdBy = createdBy,
+                profilePictureUrl = profilePictureUrl
             )
 
             // Save to Room with isSynced = false
@@ -51,6 +54,10 @@ class NoteRepository(
             // Update Room with isSynced = false
             database.noteDao().update(
                 note.toEntity(isSynced = false).copy(
+                    title = note.title,
+                    content = note.content,
+                    createdBy = note.createdBy,
+                    profilePictureUrl = note.profilePictureUrl,
                     lastModified = System.currentTimeMillis()
                 )
             )

@@ -305,6 +305,7 @@ class DashboardViewModel(
                             content = note.content,
                             createdBy = creatorName,
                             createdAt = createdAtFormatted,
+                            profilePictureUrl = creator?.profilePictureUrl,
                             isSynced = note.isSynced
                         )
                     }

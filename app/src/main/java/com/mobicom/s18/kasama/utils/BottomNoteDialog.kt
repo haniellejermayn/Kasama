@@ -18,6 +18,7 @@ fun showNoteBottomSheet(
     context: Context,
     householdId: String,
     currentUserId: String,
+    profilePictureUrl: String?,
     note: NoteUI? = null,
     onSave: () -> Unit = {}
 ) {
@@ -80,7 +81,8 @@ fun showNoteBottomSheet(
                         householdId = householdId,
                         title = title.ifEmpty { "Untitled" },
                         content = content,
-                        createdBy = currentUserId
+                        createdBy = currentUserId,
+                        profilePictureUrl = profilePictureUrl
                     )
 
                     if (result.isSuccess) {

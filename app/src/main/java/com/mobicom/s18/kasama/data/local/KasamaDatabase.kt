@@ -10,7 +10,7 @@ import com.mobicom.s18.kasama.data.local.entities.*
 
 @Database(
     entities = [User::class, Household::class, Chore::class, Note::class, PendingDelete::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
