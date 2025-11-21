@@ -27,8 +27,11 @@ class DashboardViewModel(
     private val database: KasamaDatabase
 ) : ViewModel() {
 
-    private val _chores = MutableStateFlow<List<ChoreUI>>(emptyList())
-    val chores: StateFlow<List<ChoreUI>> = _chores.asStateFlow()
+    private val _overdueChores = MutableStateFlow<List<ChoreUI>>(emptyList())
+    val overdueChores: StateFlow<List<ChoreUI>> = _overdueChores.asStateFlow()
+
+    private val _todayChores = MutableStateFlow<List<ChoreUI>>(emptyList())
+    val todayChores: StateFlow<List<ChoreUI>> = _todayChores.asStateFlow()
 
     private val _notes = MutableStateFlow<List<NoteUI>>(emptyList())
     val notes: StateFlow<List<NoteUI>> = _notes.asStateFlow()
@@ -54,13 +57,77 @@ class DashboardViewModel(
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH)
 
     fun loadDashboardData(householdId: String, currentUserId: String) {
-        loadUserChores(householdId, currentUserId)
+        loadAndFilterUserChores(householdId, currentUserId)
         loadRecentNotes(householdId)
         loadHousemates(householdId)
         loadMostProductiveMember(householdId)
     }
 
-    private fun loadUserChores(householdId: String, currentUserId: String) {
+    private fun loadAndFilterUserChores(householdId: String, currentUserId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                choreRepository.syncChoresFromFirestore(householdId)
+                choreRepository.getActiveChoresWithRecentCompleted(householdId).collect { choreEntities ->
+                    val userChores = choreEntities.filter { it.assignedTo == currentUserId }
+
+                    val today = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+
+                    // --- FILTERING LOGIC --- //
+                    val overdueList = mutableListOf<ChoreUI>()
+                    val todayList = mutableListOf<ChoreUI>()
+
+                    userChores.forEach { chore ->
+                        val assignedUser = userRepository.getUserById(chore.assignedTo).getOrNull()
+                        val choreDate = Calendar.getInstance().apply {
+                            timeInMillis = chore.dueDate
+                            set(Calendar.HOUR_OF_DAY, 0)
+                            set(Calendar.MINUTE, 0)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
+
+                        val isDueToday = choreDate.timeInMillis == today.timeInMillis
+                        val isOverdue = choreDate.before(today) && !chore.isCompleted
+
+                        val choreUI = ChoreUI(
+                            id = chore.id,
+                            title = chore.title,
+                            dueDate = dateFormat.format(Date(chore.dueDate)),
+                            frequency = chore.frequency ?: "Never",
+                            assignedToNames = listOfNotNull(assignedUser?.displayName),
+                            isCompleted = chore.isCompleted,
+                            isOverdue = isOverdue,
+                            isSynced = chore.isSynced
+                        )
+
+                        when {
+                            isOverdue -> overdueList.add(choreUI)
+                            isDueToday -> todayList.add(choreUI)
+                        }
+                    }
+
+                    _overdueChores.value = overdueList
+                    _todayChores.value = todayList
+
+                    // Update progress based on all chores for the user
+                    updateProgress(overdueList + todayList)
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /*
+    private fun loadUserOverdueChores(householdId: String, currentUserId: String) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
@@ -86,15 +153,11 @@ class DashboardViewModel(
                             set(Calendar.MILLISECOND, 0)
                         }
 
-                        val isDueToday = choreDate.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
-                                choreDate.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
                         val isOverdue = choreDate.before(today)
 
                         when {
-                            // Completed chores: only show if due today
-                            chore.isCompleted -> isDueToday
                             // Incomplete chores: show if overdue OR due today
-                            else -> isOverdue || isDueToday
+                            chore.isOverdue -> isOverdue
                         }
                     }
 
@@ -133,6 +196,79 @@ class DashboardViewModel(
         }
     }
 
+    private fun loadUserTodayChores(householdId: String, currentUserId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                choreRepository.syncChoresFromFirestore(householdId)
+                choreRepository.getActiveChoresWithRecentCompleted(householdId).collect { choreEntities ->
+                    val userChores = choreEntities.filter { it.assignedTo == currentUserId }
+
+                    val today = Calendar.getInstance()
+                    today.set(Calendar.HOUR_OF_DAY, 0)
+                    today.set(Calendar.MINUTE, 0)
+                    today.set(Calendar.SECOND, 0)
+                    today.set(Calendar.MILLISECOND, 0)
+
+                    // DASHBOARD FILTERING RULES:
+                    // 1. Show incomplete chores that are overdue OR due today
+                    // 2. Show completed chores that are due today only
+                    val filteredChores = userChores.filter { chore ->
+                        val choreDate = Calendar.getInstance().apply {
+                            timeInMillis = chore.dueDate
+                            set(Calendar.HOUR_OF_DAY, 0)
+                            set(Calendar.MINUTE, 0)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
+
+                        val isDueToday = choreDate.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                                choreDate.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+                        val isOverdue = choreDate.before(today)
+
+                        when {
+                            // Completed chores: only show if due today
+                            chore.isCompleted -> isDueToday
+                            // Incomplete chores: show if overdue OR due today
+                            else -> isDueToday
+                        }
+                    }
+
+                    val choreUIs = filteredChores.map { chore ->
+                        val assignedUser = userRepository.getUserById(chore.assignedTo).getOrNull()
+                        val choreDate = Calendar.getInstance().apply {
+                            timeInMillis = chore.dueDate
+                            set(Calendar.HOUR_OF_DAY, 0)
+                            set(Calendar.MINUTE, 0)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
+                        val isOverdue = choreDate.before(today) && !chore.isCompleted
+
+                        ChoreUI(
+                            id = chore.id,
+                            title = chore.title,
+                            dueDate = dateFormat.format(Date(chore.dueDate)),
+                            frequency = chore.frequency ?: "Never",
+                            assignedToNames = listOfNotNull(assignedUser?.displayName),
+                            isCompleted = chore.isCompleted,
+                            isOverdue = isOverdue
+                        )
+                    }
+
+                    _chores.value = choreUIs
+
+                    // Update progress based on all filtered chores
+                    updateProgress(choreUIs)
+                    _isLoading.value = false
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+                _isLoading.value = false
+            }
+        }
+    }
+    */
     private fun loadRecentNotes(householdId: String) {
         viewModelScope.launch {
             try {
