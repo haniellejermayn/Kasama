@@ -293,7 +293,7 @@ class DashboardViewModel(
                     _recentNotesCount.value = recentNotes.size
 
                     // Format notes for display
-                    val noteDateFormat = SimpleDateFormat("MMM dd", Locale.ENGLISH)
+                    val noteDateFormat = SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH)
                     val noteUIs = thisWeekNotes.take(6).map { note ->
                         val creator = userRepository.getUserById(note.createdBy).getOrNull()
                         val creatorName = creator?.displayName ?: "Unknown"
