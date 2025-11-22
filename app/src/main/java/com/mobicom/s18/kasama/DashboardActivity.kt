@@ -622,6 +622,8 @@ class DashboardActivity : AppCompatActivity() {
                 binding.iconChoresArrow1.isVisible = false
                 binding.buttonViewAllChores2.isVisible = false
                 binding.iconChoresArrow2.isVisible = false
+                binding.textNoChoresOverdue.isVisible = false
+                binding.textNoChoresToday.isVisible = false
                 binding.textChoresSectionLabelOverdue.isVisible = false
                 binding.textChoresSectionLabelToday.isVisible = false
                 binding.dashboardChoreOverdueRecyclerView.isVisible = false
@@ -638,6 +640,8 @@ class DashboardActivity : AppCompatActivity() {
                 binding.iconChoresArrow1.isVisible = false
                 binding.buttonViewAllChores2.isVisible = false
                 binding.iconChoresArrow2.isVisible = false
+                binding.textNoChoresOverdue.isVisible = false
+                binding.textNoChoresToday.isVisible = false
                 binding.textChoresSectionLabelOverdue.isVisible = false
                 binding.textChoresSectionLabelToday.isVisible = false
                 binding.dashboardChoreOverdueRecyclerView.isVisible = false
@@ -661,6 +665,8 @@ class DashboardActivity : AppCompatActivity() {
             binding.buttonViewAllNotes,
             binding.iconChoresArrow1,
             binding.iconChoresArrow2,
+            binding.textNoChoresOverdue,
+            binding.textNoChoresToday,
             binding.iconNotesArrow,
             binding.textChoresSectionLabelOverdue,
             binding.textChoresSectionLabelToday,
@@ -694,6 +700,8 @@ class DashboardActivity : AppCompatActivity() {
             binding.buttonViewAllNotes,
             binding.iconChoresArrow1,
             binding.iconChoresArrow2,
+            binding.textNoChoresOverdue,
+            binding.textNoChoresToday,
             binding.iconNotesArrow,
             binding.textChoresSectionLabelOverdue,
             binding.textChoresSectionLabelToday,
