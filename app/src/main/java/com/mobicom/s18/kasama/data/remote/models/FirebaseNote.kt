@@ -8,9 +8,10 @@ data class FirebaseNote(
     val title: String = "",
     val content: String = "",
     val createdBy: String = "",
+    val profilePictureUrl: String? = "",
     val createdAt: Long = System.currentTimeMillis()
 ) {
-    constructor() : this("", "", "", "", "")
+    constructor() : this("", "", "", "", "", "")
 
     fun toEntity(isSynced: Boolean = true): Note {
         return Note(
@@ -19,6 +20,7 @@ data class FirebaseNote(
             title = title,
             content = content,
             createdBy = createdBy,
+            profilePictureUrl = profilePictureUrl,
             createdAt = createdAt,
             isSynced = isSynced,
             lastModified = System.currentTimeMillis()
@@ -34,6 +36,7 @@ fun Note.toFirebaseModel(): FirebaseNote {
         title = title,
         content = content,
         createdBy = createdBy,
+        profilePictureUrl = profilePictureUrl,
         createdAt = createdAt
     )
 }

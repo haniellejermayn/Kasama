@@ -6,5 +6,6 @@ data class NoteUI(
     val content: String,
     val createdBy: String = "",
     val createdAt: String = "", // (formatted date)
+    val profilePictureUrl: String?,
     val isSynced: Boolean = true
 )

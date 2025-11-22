@@ -225,7 +225,7 @@
         android:id="@+id/constraintLayout3"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         app:layout_constraintStart_toStartOf="@+id/cardView"
         app:layout_constraintTop_toBottomOf="@+id/cardView">
 
@@ -314,7 +314,7 @@
         android:layout_width="0dp"
         android:layout_height="40dp"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="12dp"
         android:background="@drawable/rounded_button_primary"
         android:fontFamily="@font/open_sans_bold"
@@ -332,7 +332,7 @@
         android:layout_width="0dp"
         android:layout_height="40dp"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="12dp"
         android:background="@drawable/rounded_button_primary"
         android:fontFamily="@font/open_sans_bold"
@@ -364,59 +364,170 @@
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout3" />
 
     <TextView
-        android:id="@+id/button_view_all_chores"
+        android:id="@+id/button_view_all_chores_1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:layout_marginEnd="12dp"
+        android:layout_marginEnd="6dp"
         android:fontFamily="@font/open_sans"
         android:text="View All Chores"
         android:textSize="15sp"
         android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/text_chores_section_label_overdue"
+        app:layout_constraintTop_toTopOf="@+id/text_chores_section_label_overdue"
+        app:layout_constraintEnd_toStartOf="@+id/icon_chores_arrow_1" />
+
+    <ImageView
+        android:id="@+id/icon_chores_arrow_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/button_view_all_chores_1"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/button_view_all_chores_1"
+        app:srcCompat="@drawable/arrow" />
+
+    <TextView
+        android:id="@+id/text_chores_section_label_overdue"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/open_sans"
+        android:text="Overdue"
+        android:textColor="#666666"
+        android:textSize="22sp"
+        android:visibility="gone"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_new_chore" />
 
     <TextView
-        android:id="@+id/text_chores_section_label"
+        android:id="@+id/button_view_all_chores_2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
+        android:layout_marginEnd="6dp"
         android:fontFamily="@font/open_sans"
-        android:text="Due Today and/or Overdue"
-        android:textColor="#666666"
+        android:text="View All Chores"
         android:textSize="15sp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/text_chores_section_label_today"
+        app:layout_constraintTop_toTopOf="@+id/text_chores_section_label_today"
+        app:layout_constraintEnd_toStartOf="@+id/icon_chores_arrow_2" />
+
+    <ImageView
+        android:id="@+id/icon_chores_arrow_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/button_view_all_chores_2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/button_view_all_chores_2"
+        app:srcCompat="@drawable/arrow" />
+
+    <TextView
+        android:id="@+id/text_chores_section_label_today"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/open_sans"
+        android:text="Due Today"
+        android:textColor="#666666"
+        android:textSize="22sp"
+        android:visibility="visible"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/container_chores_overdue" />
+
+    <TextView
+        android:id="@+id/text_no_chores_today"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="12dp"
+        android:fontFamily="@font/open_sans"
+        android:text="No chores due today"
+        android:textAlignment="center"
+        android:textColor="#666666"
+        android:textSize="18sp"
         android:visibility="gone"
-        app:layout_constraintBaseline_toBaselineOf="@+id/button_view_all_chores"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_chores_section_label_today" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/container_chores_overdue"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="12dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_chores_section_label_overdue">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/dashboardChoreOverdueRecyclerView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/container_chores_overdue" />
+
+        <TextView
+            android:id="@+id/text_no_chores_overdue"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="12dp"
+            android:fontFamily="@font/open_sans"
+            android:paddingBottom="20dp"
+            android:text="No chores overdue"
+            android:textAlignment="center"
+            android:textColor="#666666"
+            android:textSize="18sp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <TextView
         android:id="@+id/button_view_all_notes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="12dp"
+        android:layout_marginEnd="6dp"
         android:fontFamily="@font/open_sans"
         android:text="View All Notes"
         android:textSize="15sp"
         android:visibility="visible"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_new_note" />
+        app:layout_constraintBottom_toBottomOf="@+id/text_notes_section_label"
+        app:layout_constraintEnd_toStartOf="@+id/icon_notes_arrow"
+        app:layout_constraintTop_toTopOf="@+id/text_notes_section_label" />
 
     <TextView
         android:id="@+id/text_notes_section_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
+        android:layout_marginTop="24dp"
         android:fontFamily="@font/open_sans"
         android:text="Posted this week"
         android:textColor="#666666"
-        android:textSize="15sp"
+        android:textSize="22sp"
+        android:textStyle="bold"
         android:visibility="visible"
-        app:layout_constraintBaseline_toBaselineOf="@+id/button_view_all_notes"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_new_note" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/dashboardChoreRecyclerView"
+        android:id="@+id/dashboardChoreTodayRecyclerView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
@@ -425,21 +536,20 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_chores_section_label" />
+        app:layout_constraintTop_toBottomOf="@+id/text_chores_section_label_today" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dashboardNotesRecyclerView"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="12dp"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_view_all_notes"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/text_notes_section_label" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dashboardHousemateRecyclerView"
@@ -552,6 +662,16 @@
 
         app:pressedTranslationZ="0dp"
         app:srcCompat="@drawable/baseline_home_24" />
+
+    <ImageView
+        android:id="@+id/icon_notes_arrow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        app:layout_constraintBottom_toBottomOf="@+id/button_view_all_notes"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/button_view_all_notes"
+        app:srcCompat="@drawable/arrow" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

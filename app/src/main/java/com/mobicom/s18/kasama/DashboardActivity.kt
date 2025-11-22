@@ -3,18 +3,13 @@ package com.mobicom.s18.kasama
 import android.animation.ObjectAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
-import android.view.GestureDetector
-import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -36,7 +31,8 @@ import java.util.Locale
 class DashboardActivity : AppCompatActivity() {
 
     private lateinit var binding: LayoutDashboardPageBinding
-    private lateinit var choreAdapter: ChoreAdapter
+    private lateinit var overdueChoreAdapter: ChoreAdapter
+    private lateinit var todayChoreAdapter: ChoreAdapter
     private lateinit var noteAdapter: NoteAdapter
     private lateinit var housemateAdapter: HousemateAdapter
 
@@ -55,6 +51,9 @@ class DashboardActivity : AppCompatActivity() {
 
     private var currentHouseholdId: String? = null
     private var currentUserId: String? = null
+    private var currentUserPfp: String? = null
+    private var hasOverdueChores = false
+    private var hasTodayChores = false
 
     enum class Tab {
         CHORES, NOTES, HOUSEMATES
@@ -169,9 +168,13 @@ class DashboardActivity : AppCompatActivity() {
             if (userResult.isSuccess) {
                 val user = userResult.getOrNull()
 
+                currentUserPfp = user?.profilePictureUrl
+
                 if (user?.householdId == null) {
                     val i = Intent(this@DashboardActivity, DashboardEmptyActivity::class.java)
                     startActivity(i)
+                    finish()
+                    return@launch
                 }
 
                 val householdId = user?.householdId
@@ -188,10 +191,15 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerViews() {
-        choreAdapter = ChoreAdapter(emptyList())
-        binding.dashboardChoreRecyclerView.layoutManager = LinearLayoutManager(this)
-        binding.dashboardChoreRecyclerView.adapter = choreAdapter
+        overdueChoreAdapter = ChoreAdapter(emptyList())
+        binding.dashboardChoreOverdueRecyclerView.layoutManager = LinearLayoutManager(this)
+        binding.dashboardChoreOverdueRecyclerView.adapter = overdueChoreAdapter
 
+        todayChoreAdapter = ChoreAdapter(emptyList())
+        binding.dashboardChoreTodayRecyclerView.layoutManager = LinearLayoutManager(this)
+        binding.dashboardChoreTodayRecyclerView.adapter = todayChoreAdapter
+
+        /*
         choreAdapter.setOnChoreClickListener { chore ->
             lifecycleScope.launch {
                 val householdId = currentHouseholdId
@@ -229,9 +237,53 @@ class DashboardActivity : AppCompatActivity() {
             }
 
         }
+        */
+
+        val choreClickListener: (ChoreUI) -> Unit = { chore ->
+            lifecycleScope.launch {
+                val householdId = currentHouseholdId
+                val userId = currentUserId
+                if (householdId == null || userId == null) {
+                    Toast.makeText(this@DashboardActivity, "User data not loaded yet", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                val app = application as KasamaApplication
+                val householdResult = app.householdRepository.getHouseholdById(householdId)
+                if (householdResult.isSuccess) {
+                    val household = householdResult.getOrNull()
+                    val housemateNames = household?.memberIds?.mapNotNull { memberUserId ->
+                        app.userRepository.getUserById(memberUserId).getOrNull()?.displayName
+                    } ?: emptyList()
+
+                    showChoreBottomSheet(
+                        context = this@DashboardActivity,
+                        availableHousemates = housemateNames,
+                        householdId = householdId,
+                        currentUserId = userId,
+                        chore = chore,
+                        onSave = {
+                            viewModel.loadDashboardData(householdId, userId)
+                        }
+                    )
+                }
+            }
+        }
+
+        val choreCompletedListener: (ChoreUI) -> Unit = { chore ->
+            currentHouseholdId?.let { householdId ->
+                viewModel.toggleChoreCompletion(chore.id, householdId)
+            }
+        }
+
+        overdueChoreAdapter.setOnChoreClickListener(choreClickListener)
+        overdueChoreAdapter.setOnChoreCompletedListener(choreCompletedListener)
+
+        todayChoreAdapter.setOnChoreClickListener(choreClickListener)
+        todayChoreAdapter.setOnChoreCompletedListener(choreCompletedListener)
 
         noteAdapter = NoteAdapter(mutableListOf())
-        binding.dashboardNotesRecyclerView.layoutManager = GridLayoutManager(this, 3)
+        binding.dashboardNotesRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.dashboardNotesRecyclerView.adapter = noteAdapter
 
         housemateAdapter = HousemateAdapter(emptyList())
@@ -241,8 +293,23 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.chores.collect { chores ->
-                choreAdapter.setChores(chores)
+            viewModel.overdueChores.collect { chores ->
+                overdueChoreAdapter.setChores(chores)
+                hasOverdueChores = chores.isNotEmpty()
+                //binding.textChoresSectionLabelOverdue.isVisible = hasOverdueChores
+                //binding.buttonViewAllChores1.isVisible = hasOverdueChores
+                binding.textNoChoresOverdue.isVisible = !hasOverdueChores
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.todayChores.collect { chores ->
+                todayChoreAdapter.setChores(chores)
+                hasTodayChores = chores.isNotEmpty()
+                //binding.textChoresSectionLabelToday.isVisible = true
+                //binding.buttonViewAllChores2.isVisible = true
+                //binding.iconChoresArrow2.isVisible = true
+                binding.textNoChoresToday.isVisible = !hasTodayChores
             }
         }
 
@@ -345,7 +412,26 @@ class DashboardActivity : AppCompatActivity() {
             }
         }
 
-        binding.buttonViewAllChores.setOnClickListener {
+        binding.buttonViewAllChores1.setOnClickListener {
+            val allChoresIntent = Intent(this, ChoreActivity::class.java)
+            allChoresIntent.putExtra("household_id", currentHouseholdId)
+            allChoresIntent.putExtra("user_id", currentUserId)
+            startActivity(allChoresIntent)
+        }
+        binding.iconChoresArrow1.setOnClickListener {
+            val allChoresIntent = Intent(this, ChoreActivity::class.java)
+            allChoresIntent.putExtra("household_id", currentHouseholdId)
+            allChoresIntent.putExtra("user_id", currentUserId)
+            startActivity(allChoresIntent)
+        }
+
+        binding.buttonViewAllChores2.setOnClickListener {
+            val allChoresIntent = Intent(this, ChoreActivity::class.java)
+            allChoresIntent.putExtra("household_id", currentHouseholdId)
+            allChoresIntent.putExtra("user_id", currentUserId)
+            startActivity(allChoresIntent)
+        }
+        binding.iconChoresArrow2.setOnClickListener {
             val allChoresIntent = Intent(this, ChoreActivity::class.java)
             allChoresIntent.putExtra("household_id", currentHouseholdId)
             allChoresIntent.putExtra("user_id", currentUserId)
@@ -353,6 +439,11 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         binding.buttonViewAllNotes.setOnClickListener {
+            val allNotesIntent = Intent(this, NoteActivity::class.java)
+            startActivity(allNotesIntent)
+        }
+
+        binding.iconNotesArrow.setOnClickListener {
             val allNotesIntent = Intent(this, NoteActivity::class.java)
             startActivity(allNotesIntent)
         }
@@ -369,6 +460,7 @@ class DashboardActivity : AppCompatActivity() {
                 context = this,
                 householdId = householdId,
                 currentUserId = userId,
+                profilePictureUrl = currentUserPfp,
                 note = null,
                 onSave = {
                     viewModel.loadDashboardData(householdId, userId)
@@ -499,12 +591,20 @@ class DashboardActivity : AppCompatActivity() {
         when (tab) {
             Tab.CHORES -> {
                 binding.buttonNewChore.isVisible = true
-                binding.buttonViewAllChores.isVisible = true
-                binding.textChoresSectionLabel.isVisible = true
-                binding.dashboardChoreRecyclerView.isVisible = true
+                binding.buttonViewAllChores1.isVisible = true
+                binding.iconChoresArrow1.isVisible = true
+                binding.textChoresSectionLabelOverdue.isVisible = true
+                binding.textNoChoresOverdue.isVisible = !hasOverdueChores
+                binding.buttonViewAllChores2.isVisible = true
+                binding.iconChoresArrow2.isVisible = true
+                binding.textNoChoresToday.isVisible = !hasTodayChores
+                binding.textChoresSectionLabelToday.isVisible = true
+                binding.dashboardChoreOverdueRecyclerView.isVisible = true
+                binding.dashboardChoreTodayRecyclerView.isVisible = true
 
                 binding.buttonNewNote.isVisible = false
                 binding.buttonViewAllNotes.isVisible = false
+                binding.iconNotesArrow.isVisible = false
                 binding.textNotesSectionLabel.isVisible = false
                 binding.dashboardNotesRecyclerView.isVisible = false
                 binding.buttonInviteMember.isVisible = false
@@ -513,13 +613,21 @@ class DashboardActivity : AppCompatActivity() {
             Tab.NOTES -> {
                 binding.buttonNewNote.isVisible = true
                 binding.buttonViewAllNotes.isVisible = true
+                binding.iconNotesArrow.isVisible = true
                 binding.textNotesSectionLabel.isVisible = true
                 binding.dashboardNotesRecyclerView.isVisible = true
 
                 binding.buttonNewChore.isVisible = false
-                binding.buttonViewAllChores.isVisible = false
-                binding.textChoresSectionLabel.isVisible = false
-                binding.dashboardChoreRecyclerView.isVisible = false
+                binding.buttonViewAllChores1.isVisible = false
+                binding.iconChoresArrow1.isVisible = false
+                binding.buttonViewAllChores2.isVisible = false
+                binding.iconChoresArrow2.isVisible = false
+                binding.textNoChoresOverdue.isVisible = false
+                binding.textNoChoresToday.isVisible = false
+                binding.textChoresSectionLabelOverdue.isVisible = false
+                binding.textChoresSectionLabelToday.isVisible = false
+                binding.dashboardChoreOverdueRecyclerView.isVisible = false
+                binding.dashboardChoreTodayRecyclerView.isVisible = false
                 binding.buttonInviteMember.isVisible = false
                 binding.dashboardHousemateRecyclerView.isVisible = false
             }
@@ -528,11 +636,19 @@ class DashboardActivity : AppCompatActivity() {
                 binding.dashboardHousemateRecyclerView.isVisible = true
 
                 binding.buttonNewChore.isVisible = false
-                binding.buttonViewAllChores.isVisible = false
-                binding.textChoresSectionLabel.isVisible = false
-                binding.dashboardChoreRecyclerView.isVisible = false
+                binding.buttonViewAllChores1.isVisible = false
+                binding.iconChoresArrow1.isVisible = false
+                binding.buttonViewAllChores2.isVisible = false
+                binding.iconChoresArrow2.isVisible = false
+                binding.textNoChoresOverdue.isVisible = false
+                binding.textNoChoresToday.isVisible = false
+                binding.textChoresSectionLabelOverdue.isVisible = false
+                binding.textChoresSectionLabelToday.isVisible = false
+                binding.dashboardChoreOverdueRecyclerView.isVisible = false
+                binding.dashboardChoreTodayRecyclerView.isVisible = false
                 binding.buttonNewNote.isVisible = false
                 binding.buttonViewAllNotes.isVisible = false
+                binding.iconNotesArrow.isVisible = false
                 binding.textNotesSectionLabel.isVisible = false
                 binding.dashboardNotesRecyclerView.isVisible = false
             }
@@ -544,11 +660,19 @@ class DashboardActivity : AppCompatActivity() {
             binding.buttonNewChore,
             binding.buttonNewNote,
             binding.buttonInviteMember,
-            binding.buttonViewAllChores,
+            binding.buttonViewAllChores1,
+            binding.buttonViewAllChores2,
             binding.buttonViewAllNotes,
-            binding.textChoresSectionLabel,
+            binding.iconChoresArrow1,
+            binding.iconChoresArrow2,
+            binding.textNoChoresOverdue,
+            binding.textNoChoresToday,
+            binding.iconNotesArrow,
+            binding.textChoresSectionLabelOverdue,
+            binding.textChoresSectionLabelToday,
             binding.textNotesSectionLabel,
-            binding.dashboardChoreRecyclerView,
+            binding.dashboardChoreOverdueRecyclerView,
+            binding.dashboardChoreTodayRecyclerView,
             binding.dashboardNotesRecyclerView,
             binding.dashboardHousemateRecyclerView
         )
@@ -571,11 +695,19 @@ class DashboardActivity : AppCompatActivity() {
             binding.buttonNewChore,
             binding.buttonNewNote,
             binding.buttonInviteMember,
-            binding.buttonViewAllChores,
+            binding.buttonViewAllChores1,
+            binding.buttonViewAllChores2,
             binding.buttonViewAllNotes,
-            binding.textChoresSectionLabel,
+            binding.iconChoresArrow1,
+            binding.iconChoresArrow2,
+            binding.textNoChoresOverdue,
+            binding.textNoChoresToday,
+            binding.iconNotesArrow,
+            binding.textChoresSectionLabelOverdue,
+            binding.textChoresSectionLabelToday,
             binding.textNotesSectionLabel,
-            binding.dashboardChoreRecyclerView,
+            binding.dashboardChoreOverdueRecyclerView,
+            binding.dashboardChoreTodayRecyclerView,
             binding.dashboardNotesRecyclerView,
             binding.dashboardHousemateRecyclerView
         )

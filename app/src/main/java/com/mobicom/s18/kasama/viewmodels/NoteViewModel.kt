@@ -43,7 +43,7 @@ class NoteViewModel(
                         val creatorName = creator?.displayName ?: "Unknown"
 
                         // Format date
-                        val dateFormat = SimpleDateFormat("MMM dd", Locale.ENGLISH)
+                        val dateFormat = SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH)
                         val createdAtFormatted = dateFormat.format(Date(note.createdAt))
 
                         NoteUI(
@@ -52,6 +52,7 @@ class NoteViewModel(
                             content = note.content,
                             createdBy = creatorName,
                             createdAt = createdAtFormatted,
+                            profilePictureUrl = creator?.profilePictureUrl,
                             isSynced = note.isSynced
                         )
                     }
@@ -65,10 +66,10 @@ class NoteViewModel(
         }
     }
 
-    fun createNote(householdId: String, title: String, content: String, createdBy: String) {
+    fun createNote(householdId: String, title: String, content: String, createdBy: String, profilePictureUrl: String) {
         viewModelScope.launch {
             try {
-                noteRepository.createNote(householdId, title, content, createdBy)
+                noteRepository.createNote(householdId, title, content, createdBy, profilePictureUrl)
             } catch (e: Exception) {
                 _error.value = e.message
             }

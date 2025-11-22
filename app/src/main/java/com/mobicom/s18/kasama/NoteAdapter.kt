@@ -4,7 +4,6 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import com.mobicom.s18.kasama.KasamaApplication
 import kotlinx.coroutines.launch
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import com.mobicom.s18.kasama.models.NoteUI
@@ -30,6 +29,7 @@ class NoteAdapter(private val notes: MutableList<NoteUI>) : Adapter<NoteViewHold
                 context.lifecycleScope.launch {
                     val userResult = app.userRepository.getUserById(currentUser.uid)
                     val householdId = userResult.getOrNull()?.householdId
+                    val currentUserPfp = userResult.getOrNull()?.profilePictureUrl
 
                     if (householdId != null) {
                         showNoteBottomSheet(
@@ -37,6 +37,7 @@ class NoteAdapter(private val notes: MutableList<NoteUI>) : Adapter<NoteViewHold
                             householdId = householdId,
                             currentUserId = currentUser.uid,
                             note = notes[position],
+                            profilePictureUrl = currentUserPfp,
                             onSave = {
                                 // Note will be updated via Flow
                             }

@@ -6,6 +6,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.mobicom.s18.kasama.databinding.LayoutNotesPageBinding
 import com.mobicom.s18.kasama.viewmodels.NoteViewModel
 import kotlinx.coroutines.launch
@@ -55,7 +56,7 @@ class NoteActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         noteAdapter = NoteAdapter(mutableListOf())
-        binding.rvNotes.layoutManager = GridLayoutManager(this, 3)
+        binding.rvNotes.layoutManager = LinearLayoutManager(this)
         binding.rvNotes.adapter = noteAdapter
     }
 
