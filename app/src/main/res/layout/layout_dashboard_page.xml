@@ -410,7 +410,7 @@
         android:fontFamily="@font/open_sans"
         android:text="View All Chores"
         android:textSize="15sp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/text_chores_section_label_today"
         app:layout_constraintTop_toTopOf="@+id/text_chores_section_label_today"
         app:layout_constraintEnd_toStartOf="@+id/icon_chores_arrow_2" />
@@ -420,7 +420,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="12dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/button_view_all_chores_2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/button_view_all_chores_2"
@@ -436,10 +436,67 @@
         android:text="Due Today"
         android:textColor="#666666"
         android:textSize="22sp"
-        android:visibility="gone"
+        android:visibility="visible"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/dashboardChoreOverdueRecyclerView" />
+        app:layout_constraintTop_toBottomOf="@+id/container_chores_overdue" />
+
+    <TextView
+        android:id="@+id/text_no_chores_today"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="12dp"
+        android:fontFamily="@font/open_sans"
+        android:text="No chores due today"
+        android:textAlignment="center"
+        android:textColor="#666666"
+        android:textSize="18sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_chores_section_label_today" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/container_chores_overdue"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="12dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_chores_section_label_overdue">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/dashboardChoreOverdueRecyclerView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/container_chores_overdue" />
+
+        <TextView
+            android:id="@+id/text_no_chores_overdue"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="20dp"
+            android:layout_marginEnd="12dp"
+            android:fontFamily="@font/open_sans"
+            android:text="No chores overdue"
+            android:textAlignment="center"
+            android:textColor="#666666"
+            android:textSize="18sp"
+            android:visibility="visible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <TextView
         android:id="@+id/button_view_all_notes"
@@ -468,18 +525,6 @@
         android:visibility="visible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_new_note" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/dashboardChoreOverdueRecyclerView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="12dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_chores_section_label_overdue" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dashboardChoreTodayRecyclerView"

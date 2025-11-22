@@ -52,6 +52,8 @@ class DashboardActivity : AppCompatActivity() {
     private var currentHouseholdId: String? = null
     private var currentUserId: String? = null
     private var currentUserPfp: String? = null
+    private var hasOverdueChores = false
+    private var hasTodayChores = false
 
     enum class Tab {
         CHORES, NOTES, HOUSEMATES
@@ -293,18 +295,21 @@ class DashboardActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.overdueChores.collect { chores ->
                 overdueChoreAdapter.setChores(chores)
-                binding.textChoresSectionLabelOverdue.isVisible = chores.isNotEmpty()
-                binding.buttonViewAllChores1.isVisible = chores.isNotEmpty()
-                binding.iconChoresArrow1.isVisible = chores.isNotEmpty()
+                hasOverdueChores = chores.isNotEmpty()
+                //binding.textChoresSectionLabelOverdue.isVisible = hasOverdueChores
+                //binding.buttonViewAllChores1.isVisible = hasOverdueChores
+                binding.textNoChoresOverdue.isVisible = !hasOverdueChores
             }
         }
 
         lifecycleScope.launch {
             viewModel.todayChores.collect { chores ->
                 todayChoreAdapter.setChores(chores)
-                binding.textChoresSectionLabelToday.isVisible = chores.isNotEmpty()
-                binding.buttonViewAllChores2.isVisible = chores.isNotEmpty()
-                binding.iconChoresArrow2.isVisible = chores.isNotEmpty()
+                hasTodayChores = chores.isNotEmpty()
+                //binding.textChoresSectionLabelToday.isVisible = true
+                //binding.buttonViewAllChores2.isVisible = true
+                //binding.iconChoresArrow2.isVisible = true
+                binding.textNoChoresToday.isVisible = !hasTodayChores
             }
         }
 
@@ -586,8 +591,13 @@ class DashboardActivity : AppCompatActivity() {
         when (tab) {
             Tab.CHORES -> {
                 binding.buttonNewChore.isVisible = true
+                binding.buttonViewAllChores1.isVisible = true
+                binding.iconChoresArrow1.isVisible = true
+                binding.textChoresSectionLabelOverdue.isVisible = true
+                binding.textNoChoresOverdue.isVisible = !hasOverdueChores
                 binding.buttonViewAllChores2.isVisible = true
                 binding.iconChoresArrow2.isVisible = true
+                binding.textNoChoresToday.isVisible = !hasTodayChores
                 binding.textChoresSectionLabelToday.isVisible = true
                 binding.dashboardChoreOverdueRecyclerView.isVisible = true
                 binding.dashboardChoreTodayRecyclerView.isVisible = true
