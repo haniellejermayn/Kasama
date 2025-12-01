@@ -9,6 +9,8 @@ import com.mobicom.s18.kasama.databinding.LayoutJoinConfirmBinding
 import com.mobicom.s18.kasama.data.repository.AuthRepository
 import com.mobicom.s18.kasama.data.repository.HouseholdRepository
 import kotlinx.coroutines.launch
+import com.mobicom.s18.kasama.utils.LoadingUtils.showLoading
+import com.mobicom.s18.kasama.utils.LoadingUtils.hideLoading
 
 class JoinConfirmActivity : AppCompatActivity() {
     private lateinit var viewBinding: LayoutJoinConfirmBinding
@@ -54,6 +56,7 @@ class JoinConfirmActivity : AppCompatActivity() {
         }
 
         viewBinding.confirmBtn.isEnabled = false
+        showLoading("Joining household...")
 
         lifecycleScope.launch {
             val result = householdRepository.joinHousehold(
@@ -62,6 +65,7 @@ class JoinConfirmActivity : AppCompatActivity() {
             )
 
             result.onSuccess {
+                hideLoading()
                 Toast.makeText(
                     this@JoinConfirmActivity,
                     "Successfully joined household!",
@@ -76,6 +80,7 @@ class JoinConfirmActivity : AppCompatActivity() {
             }
 
             result.onFailure { exception ->
+                hideLoading()
                 Toast.makeText(
                     this@JoinConfirmActivity,
                     "Failed to join: ${exception.message}",

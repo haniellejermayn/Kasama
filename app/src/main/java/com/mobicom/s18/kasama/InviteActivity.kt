@@ -14,6 +14,8 @@ import android.graphics.Bitmap
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
+import com.mobicom.s18.kasama.utils.LoadingUtils.showLoading
+import com.mobicom.s18.kasama.utils.LoadingUtils.hideLoading
 
 class InviteActivity : AppCompatActivity() {
     private lateinit var viewBinding: LayoutInvitePageBinding
@@ -42,11 +44,13 @@ class InviteActivity : AppCompatActivity() {
     }
 
     private fun loadCurrentHouseholdData() {
+        showLoading("Loading household data...")
         lifecycleScope.launch {
             val app = application as KasamaApplication
             val currentUser = app.firebaseAuth.currentUser
 
             if (currentUser == null) {
+                hideLoading()
                 Toast.makeText(this@InviteActivity, "User not logged in", Toast.LENGTH_SHORT).show()
                 finish()
                 return@launch
@@ -55,6 +59,7 @@ class InviteActivity : AppCompatActivity() {
             // Get user's household ID
             val userResult = app.userRepository.getUserById(currentUser.uid)
             if (userResult.isFailure || userResult.getOrNull()?.householdId == null) {
+                hideLoading()
                 Toast.makeText(
                     this@InviteActivity,
                     "No household found. Please create one first.",
@@ -70,6 +75,7 @@ class InviteActivity : AppCompatActivity() {
             // Get household details
             val householdResult = app.householdRepository.getHouseholdById(householdId)
             if (householdResult.isFailure) {
+                hideLoading()
                 Toast.makeText(
                     this@InviteActivity,
                     "Failed to load household data",
@@ -84,6 +90,7 @@ class InviteActivity : AppCompatActivity() {
             inviteCode = household.inviteCode
 
             setupUI()
+            hideLoading()
         }
     }
 

@@ -13,9 +13,11 @@ import com.mobicom.s18.kasama.databinding.LayoutChorePageBinding
 import com.mobicom.s18.kasama.utils.showChoreBottomSheet
 import com.mobicom.s18.kasama.viewmodels.ChoreViewModel
 import kotlinx.coroutines.launch
+import com.mobicom.s18.kasama.utils.LoadingUtils.showLoading
+import com.mobicom.s18.kasama.utils.LoadingUtils.hideLoading
 
 // in progress TODO: loading states for all activities
-   // DONE activities: login, signup, createHousehold
+   // DONE activities: login, signup, createHousehold, chore, dashboard, invite, joinconfirm
 // TODO: make clickable buttons more prominent
 // DONE TODO: change UI of note, make it easier to read
 // DONE(?) TODO: notifications
@@ -54,6 +56,7 @@ class ChoreActivity : AppCompatActivity() {
     }
 
     private fun loadHouseholdChores() {
+        showLoading("Loading chores...")
         lifecycleScope.launch {
             val app = application as KasamaApplication
 
@@ -74,8 +77,9 @@ class ChoreActivity : AppCompatActivity() {
                 currentUserId?.let { userId ->
                     viewModel.loadChoresGroupedByUser(householdId, userId)
                     updateDisplayedChores("today")
-                }
-            }
+                    hideLoading()
+                } ?: hideLoading()
+            } ?: hideLoading()
         }
     }
 

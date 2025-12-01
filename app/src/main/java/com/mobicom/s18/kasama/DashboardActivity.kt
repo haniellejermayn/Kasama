@@ -29,6 +29,8 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.mobicom.s18.kasama.utils.LoadingUtils.showLoading
+import com.mobicom.s18.kasama.utils.LoadingUtils.hideLoading
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -156,10 +158,12 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun loadUserData() {
+        showLoading("Loading dashboard...")
         lifecycleScope.launch {
             val app = application as KasamaApplication
             val currentUser = app.firebaseAuth.currentUser
             if (currentUser == null) {
+                hideLoading()
                 return@launch
             }
 
@@ -173,6 +177,7 @@ class DashboardActivity : AppCompatActivity() {
                 currentUserPfp = user?.profilePictureUrl
 
                 if (user?.householdId == null) {
+                    hideLoading()
                     val i = Intent(this@DashboardActivity, DashboardEmptyActivity::class.java)
                     startActivity(i)
                     finish()
@@ -188,6 +193,9 @@ class DashboardActivity : AppCompatActivity() {
                 if (householdId != null) {
                     viewModel.loadDashboardData(householdId, userId)
                 }
+                hideLoading()
+            } else {
+                hideLoading()
             }
         }
     }
