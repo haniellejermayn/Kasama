@@ -206,7 +206,20 @@ class ChoreRepository(
                 .await()
 
             val chores = snapshot.toObjects(FirebaseChore::class.java)
+
+            // Get all pending deletes for chores
+            val pendingDeleteIds = database.pendingDeleteDao()
+                .getAllPendingDeletes()
+                .filter { it.itemType == "chore" }
+                .map { it.itemId }
+                .toSet()
+
             chores.forEach { chore ->
+                // Skip if this chore is pending deletion
+                if (chore.id in pendingDeleteIds) {
+                    return@forEach
+                }
+
                 val localChore = database.choreDao().getChoreByIdOnce(chore.id)
                 if (localChore == null || localChore.isSynced) {
                     database.choreDao().insert(chore.toEntity(isSynced = true))

@@ -21,15 +21,18 @@ class SyncWorker(
         return try {
             Log.d("SyncWorker", "Starting sync...")
 
+            // Delete from Firestore first
+            syncPendingDeletes()
+
+            // Then sync local changes to Firestore
             syncChores()
             syncNotes()
-            syncPendingDeletes()
 
             Log.d("SyncWorker", "Sync completed successfully")
             Result.success()
         } catch (e: Exception) {
             Log.e("SyncWorker", "Sync failed", e)
-            Result.retry() // WorkManager will retry with exponential backoff
+            Result.retry()
         }
     }
 
