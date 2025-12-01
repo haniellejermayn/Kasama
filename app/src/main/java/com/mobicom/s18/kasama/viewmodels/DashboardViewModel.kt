@@ -324,23 +324,50 @@ class DashboardViewModel(
                 if (householdResult.isSuccess) {
                     val household = householdResult.getOrNull()
                     if (household != null) {
-                        val housemateUIs = household.memberIds.mapNotNull { userId ->
-                            val userResult = userRepository.getUserById(userId)
-                            val user = userResult.getOrNull()
+                        // Collect the Flow continuously to react to changes
+                        choreRepository.getActiveChoresByHousehold(householdId).collect { allChores ->
+                            // Set up today's date for comparison
+                            val today = Calendar.getInstance().apply {
+                                set(Calendar.HOUR_OF_DAY, 0)
+                                set(Calendar.MINUTE, 0)
+                                set(Calendar.SECOND, 0)
+                                set(Calendar.MILLISECOND, 0)
+                            }
 
-                            if (user != null) {
-                                val allChores = choreRepository.getActiveChoresByHousehold(householdId).first()
-                                val userChores = allChores.filter { it.assignedTo == userId && !it.isCompleted }
+                            val housemateUIs = household.memberIds.mapNotNull { userId ->
+                                val userResult = userRepository.getUserById(userId)
+                                val user = userResult.getOrNull()
 
-                                HousemateUI(
-                                    id = user.uid,
-                                    name = user.displayName,
-                                    choresRemaining = userChores.size,
-                                    profilePictureUrl = user.profilePictureUrl
-                                )
-                            } else null
+                                if (user != null) {
+                                    // Filter chores using the same logic as dashboard
+                                    val userChores = allChores.filter { chore ->
+                                        if (chore.assignedTo != userId || chore.isCompleted) return@filter false
+
+                                        val choreDate = Calendar.getInstance().apply {
+                                            timeInMillis = chore.dueDate
+                                            set(Calendar.HOUR_OF_DAY, 0)
+                                            set(Calendar.MINUTE, 0)
+                                            set(Calendar.SECOND, 0)
+                                            set(Calendar.MILLISECOND, 0)
+                                        }
+
+                                        val isDueToday = choreDate.timeInMillis == today.timeInMillis
+                                        val isOverdue = choreDate.before(today)
+
+                                        // Include if overdue OR due today (and incomplete)
+                                        isOverdue || isDueToday
+                                    }
+
+                                    HousemateUI(
+                                        id = user.uid,
+                                        name = user.displayName,
+                                        choresRemaining = userChores.size,
+                                        profilePictureUrl = user.profilePictureUrl
+                                    )
+                                } else null
+                            }
+                            _housemates.value = housemateUIs
                         }
-                        _housemates.value = housemateUIs
                     }
                 }
             } catch (e: Exception) {
@@ -356,24 +383,25 @@ class DashboardViewModel(
                 if (householdResult.isSuccess) {
                     val household = householdResult.getOrNull()
                     if (household != null) {
-                        val allChores = choreRepository.getChoresByHousehold(householdId).first()
+                        // Collect the Flow continuously
+                        choreRepository.getChoresByHousehold(householdId).collect { allChores ->
+                            // Calculate completion count for each member
+                            val memberCompletions = household.memberIds.map { userId ->
+                                val completedCount = allChores.count {
+                                    it.assignedTo == userId && it.isCompleted
+                                }
+                                userId to completedCount
+                            }.sortedByDescending { it.second }
 
-                        // Calculate completion count for each member
-                        val memberCompletions = household.memberIds.map { userId ->
-                            val completedCount = allChores.count {
-                                it.assignedTo == userId && it.isCompleted
+                            // Get the most productive member
+                            val topMemberId = memberCompletions.firstOrNull()?.first
+                            if (topMemberId != null) {
+                                val user = userRepository.getUserById(topMemberId).getOrNull()
+                                _mostProductiveMember.value = Pair(
+                                    user?.displayName ?: "Unknown",
+                                    user?.profilePictureUrl
+                                )
                             }
-                            userId to completedCount
-                        }.sortedByDescending { it.second }
-
-                        // Get the most productive member
-                        val topMemberId = memberCompletions.firstOrNull()?.first
-                        if (topMemberId != null) {
-                            val user = userRepository.getUserById(topMemberId).getOrNull()
-                            _mostProductiveMember.value = Pair(
-                                user?.displayName ?: "Unknown",
-                                user?.profilePictureUrl
-                            )
                         }
                     }
                 }
