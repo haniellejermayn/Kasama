@@ -16,8 +16,8 @@ import kotlinx.coroutines.launch
 
 // TODO: loading states for all activities
 // TODO: make clickable buttons more prominent
-// TODO: change UI of note, make it easier to read
-// TODO: notifications
+// DONE TODO: change UI of note, make it easier to read
+// DONE(?) TODO: notifications
 // TODO: make the filter thing funnel thing
 // TODO: color change (idk what)
 
