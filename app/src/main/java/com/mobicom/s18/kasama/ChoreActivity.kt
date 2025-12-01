@@ -14,7 +14,8 @@ import com.mobicom.s18.kasama.utils.showChoreBottomSheet
 import com.mobicom.s18.kasama.viewmodels.ChoreViewModel
 import kotlinx.coroutines.launch
 
-// TODO: loading states for all activities
+// in progress TODO: loading states for all activities
+   // DONE activities: login, signup, createHousehold
 // TODO: make clickable buttons more prominent
 // DONE TODO: change UI of note, make it easier to read
 // DONE(?) TODO: notifications

@@ -1,4 +1,6 @@
 package com.mobicom.s18.kasama
+import com.mobicom.s18.kasama.utils.LoadingUtils.showLoading
+import com.mobicom.s18.kasama.utils.LoadingUtils.hideLoading
 
 import android.content.Intent
 import android.os.Bundle
@@ -54,12 +56,14 @@ class SignupActivity : AppCompatActivity() {
         }
 
         viewBinding.buttonSignup.isEnabled = false
+        showLoading("Creating account...")
 
         // launch coroutine to handle signup
         lifecycleScope.launch {
             val result = authRepository.signUp(email, password, displayName)
 
             result.onSuccess {
+                hideLoading()
                 Toast.makeText(this@SignupActivity, "Account created successfully!", Toast.LENGTH_SHORT).show()
 
                 val profileSetupIntent = Intent(this@SignupActivity, ProfileSetupActivity::class.java)
@@ -68,6 +72,7 @@ class SignupActivity : AppCompatActivity() {
             }
 
             result.onFailure { exception ->
+                hideLoading()
                 Toast.makeText(
                     this@SignupActivity,
                     "Signup failed: ${exception.message}",

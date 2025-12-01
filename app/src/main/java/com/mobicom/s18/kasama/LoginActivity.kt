@@ -8,6 +8,8 @@ import androidx.lifecycle.lifecycleScope
 import com.mobicom.s18.kasama.databinding.LayoutLoginPageBinding
 import com.mobicom.s18.kasama.data.repository.AuthRepository
 import kotlinx.coroutines.launch
+import com.mobicom.s18.kasama.utils.LoadingUtils.showLoading
+import com.mobicom.s18.kasama.utils.LoadingUtils.hideLoading
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var viewBinding: LayoutLoginPageBinding
@@ -41,12 +43,14 @@ class LoginActivity : AppCompatActivity() {
         }
 
         viewBinding.buttonLogin.isEnabled = false
+        showLoading("Logging in...")
 
         // launch coroutine to handle login
         lifecycleScope.launch {
             val result = authRepository.logIn(email, password)
 
             result.onSuccess {
+                hideLoading()
                 Toast.makeText(this@LoginActivity, "Login successful!", Toast.LENGTH_SHORT).show()
 
                 // check if user already has household
@@ -63,6 +67,7 @@ class LoginActivity : AppCompatActivity() {
             }
 
             result.onFailure { exception ->
+                hideLoading()
                 Toast.makeText(
                     this@LoginActivity,
                     "Login failed: ${exception.message}",

@@ -8,6 +8,8 @@ import androidx.lifecycle.lifecycleScope
 import com.mobicom.s18.kasama.databinding.LayoutCreateHouseholdBinding
 import com.mobicom.s18.kasama.data.repository.AuthRepository
 import com.mobicom.s18.kasama.data.repository.HouseholdRepository
+import com.mobicom.s18.kasama.utils.LoadingUtils.hideLoading
+import com.mobicom.s18.kasama.utils.LoadingUtils.showLoading
 import kotlinx.coroutines.launch
 
 class CreateHouseholdActivity : AppCompatActivity() {
@@ -52,6 +54,7 @@ class CreateHouseholdActivity : AppCompatActivity() {
         }
 
         viewBinding.createBtn.isEnabled = false
+        showLoading("Creating household...")
 
         lifecycleScope.launch {
             val result = householdRepository.createHousehold(
@@ -60,6 +63,7 @@ class CreateHouseholdActivity : AppCompatActivity() {
             )
 
             result.onSuccess { household ->
+                hideLoading()
                 Toast.makeText(
                     this@CreateHouseholdActivity,
                     "Household created!",
@@ -76,6 +80,7 @@ class CreateHouseholdActivity : AppCompatActivity() {
             }
 
             result.onFailure { exception ->
+                hideLoading()
                 Toast.makeText(
                     this@CreateHouseholdActivity,
                     "Failed to create household: ${exception.message}",
