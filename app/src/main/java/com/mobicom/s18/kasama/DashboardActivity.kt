@@ -6,10 +6,12 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -336,19 +338,60 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            viewModel.mostProductiveMember.collect { (name, profileUrl) ->
+            viewModel.mostProductiveMember.collect { (name, profileUrl, shouldShowProfile) ->
                 binding.productiveHousemateName.text = name
 
-                // Load most productive member's profile picture
-                if (profileUrl != null) {
-                    Glide.with(this@DashboardActivity)
-                        .load(profileUrl)
-                        .circleCrop()
-                        .placeholder(R.drawable.kasama_profile_default)
-                        .error(R.drawable.kasama_profile_default)
-                        .into(binding.productiveHousematePfp)
+                if (shouldShowProfile) {
+                    // Show normal layout with labels
+                    binding.textHousemate.visibility = View.VISIBLE
+                    binding.textProductivity.visibility = View.VISIBLE
+                    binding.productiveHousematePfp.visibility = View.VISIBLE
+
+                    // Reset to wrap_content and restore margin
+                    (binding.activeProfileContainer.layoutParams as ConstraintLayout.LayoutParams).apply {
+                        width = ConstraintLayout.LayoutParams.WRAP_CONTENT
+                        binding.activeProfileContainer.layoutParams = this
+                    }
+
+                    (binding.productiveHousemateName.layoutParams as LinearLayout.LayoutParams).apply {
+                        width = LinearLayout.LayoutParams.WRAP_CONTENT
+                        marginStart = (8 * resources.displayMetrics.density).toInt()
+                        binding.productiveHousemateName.layoutParams = this
+                    }
+
+                    if (profileUrl != null) {
+                        Glide.with(this@DashboardActivity)
+                            .load(profileUrl)
+                            .circleCrop()
+                            .placeholder(R.drawable.kasama_profile_default)
+                            .error(R.drawable.kasama_profile_default)
+                            .into(binding.productiveHousematePfp)
+                    } else {
+                        binding.productiveHousematePfp.setImageResource(R.drawable.kasama_profile_default)
+                    }
                 } else {
-                    binding.productiveHousematePfp.setImageResource(R.drawable.kasama_profile_default)
+                    // Hide labels and profile picture for special messages
+                    binding.textHousemate.visibility = View.GONE
+                    binding.textProductivity.visibility = View.GONE
+                    binding.productiveHousematePfp.visibility = View.GONE
+
+                    // Make container match parent width
+                    (binding.activeProfileContainer.layoutParams as ConstraintLayout.LayoutParams).apply {
+                        width = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT // 0dp = match_constraint
+                        marginStart = (12 * resources.displayMetrics.density).toInt()
+                        marginEnd = (12 * resources.displayMetrics.density).toInt()
+                        binding.activeProfileContainer.layoutParams = this
+                    }
+
+                    // Make text match parent width within LinearLayout and center it
+                    (binding.productiveHousemateName.layoutParams as LinearLayout.LayoutParams).apply {
+                        width = LinearLayout.LayoutParams.MATCH_PARENT
+                        marginStart = 0
+                        binding.productiveHousemateName.layoutParams = this
+                    }
+
+                    // Center align the text
+                    binding.productiveHousemateName.textAlignment = View.TEXT_ALIGNMENT_CENTER
                 }
             }
         }

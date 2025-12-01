@@ -42,8 +42,11 @@ class DashboardViewModel(
     private val _progressData = MutableStateFlow(Triple(0, "", "")) // percentage, message, progress text
     val progressData: StateFlow<Triple<Int, String, String>> = _progressData.asStateFlow()
 
-    private val _mostProductiveMember = MutableStateFlow<Pair<String, String?>>(Pair("Loading...", null)) // name, profileUrl
-    val mostProductiveMember: StateFlow<Pair<String, String?>> = _mostProductiveMember.asStateFlow()
+
+    private val _mostProductiveMember = MutableStateFlow<Triple<String, String?, Boolean>>(
+        Triple("Loading...", null, false)
+    )
+    val mostProductiveMember: StateFlow<Triple<String, String?, Boolean>> = _mostProductiveMember.asStateFlow()
 
     private val _recentNotesCount = MutableStateFlow(0)
     val recentNotesCount: StateFlow<Int> = _recentNotesCount.asStateFlow()
@@ -383,9 +386,7 @@ class DashboardViewModel(
                 if (householdResult.isSuccess) {
                     val household = householdResult.getOrNull()
                     if (household != null) {
-                        // Collect the Flow continuously
                         choreRepository.getChoresByHousehold(householdId).collect { allChores ->
-                            // Calculate completion count for each member
                             val memberCompletions = household.memberIds.map { userId ->
                                 val completedCount = allChores.count {
                                     it.assignedTo == userId && it.isCompleted
@@ -393,21 +394,62 @@ class DashboardViewModel(
                                 userId to completedCount
                             }.sortedByDescending { it.second }
 
-                            // Get the most productive member
-                            val topMemberId = memberCompletions.firstOrNull()?.first
-                            if (topMemberId != null) {
-                                val user = userRepository.getUserById(topMemberId).getOrNull()
-                                _mostProductiveMember.value = Pair(
-                                    user?.displayName ?: "Unknown",
-                                    user?.profilePictureUrl
-                                )
+                            when {
+                                // No one has completed any chores
+                                memberCompletions.isEmpty() || memberCompletions.all { it.second == 0 } -> {
+                                    _mostProductiveMember.value = Triple(
+                                        "No chores completed yet",
+                                        null,
+                                        false // Don't show profile
+                                    )
+                                }
+                                else -> {
+                                    val topScore = memberCompletions.first().second
+                                    val topMembers = memberCompletions.filter { it.second == topScore }
+
+                                    when {
+                                        // Clear winner
+                                        topMembers.size == 1 -> {
+                                            val topMemberId = topMembers.first().first
+                                            val user = userRepository.getUserById(topMemberId).getOrNull()
+                                            _mostProductiveMember.value = Triple(
+                                                user?.displayName ?: "Unknown",
+                                                user?.profilePictureUrl,
+                                                true // Show profile
+                                            )
+                                        }
+                                        // Everyone is tied
+                                        topMembers.size == household.memberIds.size -> {
+                                            _mostProductiveMember.value = Triple(
+                                                "Everyone is tied! 🎉",
+                                                null,
+                                                false // Don't show profile
+                                            )
+                                        }
+                                        // Multiple people tied for first
+                                        else -> {
+                                            val names = topMembers.mapNotNull { (userId, _) ->
+                                                userRepository.getUserById(userId).getOrNull()?.displayName
+                                            }
+                                            val displayText = when (names.size) {
+                                                2 -> "${names[0]} & ${names[1]}"
+                                                else -> "${names.take(2).joinToString(", ")} & ${names.size - 2} more"
+                                            }
+                                            _mostProductiveMember.value = Triple(
+                                                "$displayText (Tied)",
+                                                null,
+                                                false // Don't show profile
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             } catch (e: Exception) {
                 _error.value = e.message
-                _mostProductiveMember.value = Pair("Error loading", null)
+                _mostProductiveMember.value = Triple("Error loading", null, false)
             }
         }
     }
