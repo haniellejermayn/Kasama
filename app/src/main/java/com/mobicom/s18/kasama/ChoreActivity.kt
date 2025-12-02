@@ -22,7 +22,7 @@ import com.mobicom.s18.kasama.utils.LoadingUtils.hideLoading
 // TODO: make clickable buttons more prominent
 // DONE TODO: change UI of note, make it easier to read
 // DONE(?) TODO: notifications
-// TODO: make the filter thing funnel thing
+// DONE TODO: make the filter thing funnel thing
 // TODO: color change (idk what) -- change the whole theme ig, but i think we can defend this if ever
 
 class ChoreActivity : AppCompatActivity() {
