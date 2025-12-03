@@ -3,6 +3,7 @@ package com.mobicom.s18.kasama.data.repository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
 import com.mobicom.s18.kasama.data.remote.models.FirebaseUser
+import com.mobicom.s18.kasama.data.remote.models.toFirebaseModel
 import kotlinx.coroutines.tasks.await
 
 class UserRepository (
