@@ -1,14 +1,19 @@
 package com.mobicom.s18.kasama.data.repository
 
+import android.util.Log
 import androidx.work.*
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
 import com.mobicom.s18.kasama.data.local.entities.PendingDelete
 import com.mobicom.s18.kasama.data.remote.models.FirebaseNote
 import com.mobicom.s18.kasama.workers.SyncWorker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.lang.System
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -17,6 +22,9 @@ class NoteRepository(
     private val database: KasamaDatabase,
     private val workManager: WorkManager
 ) {
+    // Store active listener so we can remove it later
+    private var notesListener: ListenerRegistration? = null
+    private val repositoryScope = CoroutineScope(Dispatchers.IO)
 
     suspend fun createNote(
         householdId: String,
@@ -37,10 +45,7 @@ class NoteRepository(
                 profilePictureUrl = profilePictureUrl
             )
 
-            // Save to Room with isSynced = false
             database.noteDao().insert(note.toEntity(isSynced = false))
-
-            // Schedule sync
             scheduleSyncWork()
 
             Result.success(note)
@@ -51,7 +56,6 @@ class NoteRepository(
 
     suspend fun updateNote(note: FirebaseNote): Result<Unit> {
         return try {
-            // Update Room with isSynced = false
             database.noteDao().update(
                 note.toEntity(isSynced = false).copy(
                     title = note.title,
@@ -62,7 +66,6 @@ class NoteRepository(
                 )
             )
 
-            // Schedule sync
             scheduleSyncWork()
 
             Result.success(Unit)
@@ -76,10 +79,8 @@ class NoteRepository(
             val note = database.noteDao().getNoteByIdOnce(noteId)
 
             if (note != null) {
-                // Delete from Room immediately
                 database.noteDao().delete(note)
 
-                // Track pending delete
                 database.pendingDeleteDao().insert(
                     PendingDelete(
                         itemId = noteId,
@@ -88,7 +89,6 @@ class NoteRepository(
                     )
                 )
 
-                // Schedule sync
                 scheduleSyncWork()
             }
 
@@ -110,16 +110,89 @@ class NoteRepository(
                 .get()
                 .await()
 
+            val pendingDeleteIds = database.pendingDeleteDao()
+                .getAllPendingDeletes()
+                .filter { it.itemType == "note" }
+                .map { it.itemId }
+                .toSet()
+
             val notes = snapshot.toObjects(FirebaseNote::class.java)
             notes.forEach { note ->
+                if (note.id in pendingDeleteIds) {
+                    return@forEach
+                }
+
                 val localNote = database.noteDao().getNoteByIdOnce(note.id)
                 if (localNote == null || localNote.isSynced) {
                     database.noteDao().insert(note.toEntity(isSynced = true))
                 }
             }
         } catch (e: Exception) {
-            println("Failed to sync notes from Firebase: ${e.message}")
+            Log.e("NoteRepository", "Failed to sync notes from Firebase: ${e.message}")
         }
+    }
+
+    // NEW: Start real-time listening for notes
+    fun startRealtimeSync(householdId: String) {
+        // Remove any existing listener first
+        stopRealtimeSync()
+
+        Log.d("NoteRepository", "Starting realtime sync for household: $householdId")
+
+        notesListener = firestore.collection("households")
+            .document(householdId)
+            .collection("notes")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("NoteRepository", "Realtime sync error: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    repositoryScope.launch {
+                        try {
+                            val pendingDeleteIds = database.pendingDeleteDao()
+                                .getAllPendingDeletes()
+                                .filter { it.itemType == "note" }
+                                .map { it.itemId }
+                                .toSet()
+
+                            val remoteNoteIds = mutableSetOf<String>()
+
+                            snapshot.documents.forEach { doc ->
+                                val note = doc.toObject(FirebaseNote::class.java)
+                                if (note != null && note.id !in pendingDeleteIds) {
+                                    remoteNoteIds.add(note.id)
+                                    val localNote = database.noteDao().getNoteByIdOnce(note.id)
+                                    if (localNote == null || localNote.isSynced) {
+                                        database.noteDao().insert(note.toEntity(isSynced = true))
+                                    }
+                                }
+                            }
+
+                            // Handle deletions
+                            val localNotes = database.noteDao().getNotesByHousehold(householdId).first()
+                            localNotes.forEach { localNote ->
+                                if (localNote.id !in remoteNoteIds && 
+                                    localNote.isSynced && 
+                                    localNote.id !in pendingDeleteIds) {
+                                    database.noteDao().delete(localNote)
+                                    Log.d("NoteRepository", "Deleted note from remote: ${localNote.id}")
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e("NoteRepository", "Error processing realtime update: ${e.message}")
+                        }
+                    }
+                }
+            }
+    }
+
+    // NEW: Stop real-time listening
+    fun stopRealtimeSync() {
+        notesListener?.remove()
+        notesListener = null
+        Log.d("NoteRepository", "Stopped realtime sync")
     }
 
     private fun scheduleSyncWork() {

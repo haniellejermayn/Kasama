@@ -90,8 +90,24 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Refresh data when coming back to the activity
+        // Start realtime sync
+        currentHouseholdId?.let { householdId ->
+            val app = application as KasamaApplication
+            app.choreRepository.startRealtimeSync(householdId)
+            app.noteRepository.startRealtimeSync(householdId)
+            app.householdRepository.startRealtimeSync(householdId)
+        }
+        // Also refresh data in case we missed updates while paused
         viewModel.refreshData()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Stop realtime sync to save battery
+        val app = application as KasamaApplication
+        app.choreRepository.stopRealtimeSync()
+        app.noteRepository.stopRealtimeSync()
+        app.householdRepository.stopRealtimeSync()
     }
 
     override fun onRequestPermissionsResult(
@@ -197,13 +213,18 @@ class DashboardActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                val householdId = user?.householdId
+                val householdId = user.householdId
                 currentHouseholdId = householdId
 
                 val currHousehold = app.householdRepository.getHouseholdById(householdId.toString()).getOrNull()
                 binding.textDashboardHeader.text = "${currHousehold?.name}"
 
                 if (householdId != null) {
+                    // Start realtime listeners
+                    app.choreRepository.startRealtimeSync(householdId)
+                    app.noteRepository.startRealtimeSync(householdId)
+                    app.householdRepository.startRealtimeSync(householdId)
+                    
                     viewModel.loadDashboardData(householdId, userId)
                 }
                 hideLoading()

@@ -25,6 +25,20 @@ class NoteActivity : AppCompatActivity() {
 
     private var currentHouseholdId: String? = null
 
+    override fun onResume() {
+        super.onResume()
+        currentHouseholdId?.let { householdId ->
+            val app = application as KasamaApplication
+            app.noteRepository.startRealtimeSync(householdId)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val app = application as KasamaApplication
+        app.noteRepository.stopRealtimeSync()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

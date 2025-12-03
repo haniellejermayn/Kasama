@@ -55,34 +55,7 @@ class ChoreViewModel(
     fun loadChoresGroupedByUser(householdId: String, currentUserId: String) {
         this.currentHouseholdId = householdId
         this.currentUserId = currentUserId
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                choreRepository.syncChoresFromFirestore(householdId)
-                choreRepository.getActiveChoresByHousehold(householdId).collect { choreEntities ->
-                    val choreUIs = choreEntities.map { chore ->
-                        val assignedUser = userRepository.getUserById(chore.assignedTo).getOrNull()
-                        ChoreUI(
-                            id = chore.id,
-                            title = chore.title,
-                            dueDate = dateFormat.format(Date(chore.dueDate)),
-                            frequency = chore.frequency ?: "Never",
-                            assignedToNames = listOfNotNull(assignedUser?.displayName),
-                            isCompleted = chore.isCompleted,
-                            isSynced = chore.isSynced
-                        )
-                    }
-                    _chores.value = choreUIs
-                    _isLoading.value = false
-                }
-            } catch (e: Exception) {
-                _error.value = e.message
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun loadChoresGroupedByUser(householdId: String, currentUserId: String) {
+        
         viewModelScope.launch {
             _isLoading.value = true
             try {
@@ -93,7 +66,6 @@ class ChoreViewModel(
                     val groupedChores = choreEntities.groupBy { it.assignedTo }
 
                     val sections = groupedChores.map { (userId, chores) ->
-                        // CHANGED: Use cached data instead of fetching
                         val userName = _householdMemberCache.value[userId] ?: "Unknown"
 
                         val choreUIs = chores.map { chore ->
@@ -103,7 +75,8 @@ class ChoreViewModel(
                                 dueDate = dateFormat.format(Date(chore.dueDate)),
                                 frequency = chore.frequency ?: "Never",
                                 assignedToNames = listOf(userName),
-                                isCompleted = chore.isCompleted
+                                isCompleted = chore.isCompleted,
+                                isSynced = chore.isSynced
                             )
                         }
 

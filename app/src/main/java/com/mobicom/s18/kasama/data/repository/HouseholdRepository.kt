@@ -9,11 +9,18 @@ import com.mobicom.s18.kasama.data.remote.models.FirebaseUser
 import com.mobicom.s18.kasama.data.remote.models.FirebaseHousehold
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
+import android.util.Log
+import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class HouseholdRepository(
     private val firestore: FirebaseFirestore,
     private val database: KasamaDatabase
+    private var householdListener: ListenerRegistration? = null
+    private val repositoryScope = CoroutineScope(Dispatchers.IO)
 ) {
 
     private suspend fun generateInviteCode(): String {
@@ -443,5 +450,61 @@ class HouseholdRepository(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    //Start real-time listening for household changes (members joining/leaving)
+    fun startRealtimeSync(householdId: String) {
+        stopRealtimeSync()
+
+        Log.d("HouseholdRepository", "Starting realtime sync for household: $householdId")
+
+        householdListener = firestore.collection("households")
+            .document(householdId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("HouseholdRepository", "Realtime sync error: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    val household = snapshot.toObject(FirebaseHousehold::class.java)
+                    if (household != null) {
+                        repositoryScope.launch {
+                            try {
+                                // Update local household
+                                database.householdDao().insert(household.toEntity())
+
+                                // Sync all member data
+                                household.memberIds.forEach { memberId ->
+                                    try {
+                                        val userDoc = firestore.collection("users")
+                                            .document(memberId)
+                                            .get()
+                                            .await()
+                                        
+                                        val user = userDoc.toObject(FirebaseUser::class.java)
+                                        if (user != null) {
+                                            database.userDao().insert(user.toEntity())
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e("HouseholdRepository", "Error syncing member $memberId: ${e.message}")
+                                    }
+                                }
+                                
+                                Log.d("HouseholdRepository", "Updated household with ${household.memberIds.size} members")
+                            } catch (e: Exception) {
+                                Log.e("HouseholdRepository", "Error processing household update: ${e.message}")
+                            }
+                        }
+                    }
+                }
+            }
+    }
+
+    // Stop real-time listening
+    fun stopRealtimeSync() {
+        householdListener?.remove()
+        householdListener = null
+        Log.d("HouseholdRepository", "Stopped realtime sync")
     }
 }

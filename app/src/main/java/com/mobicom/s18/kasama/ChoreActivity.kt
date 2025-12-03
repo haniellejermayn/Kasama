@@ -55,7 +55,18 @@ class ChoreActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        // Start realtime sync
+        currentHouseholdId?.let { householdId ->
+            val app = application as KasamaApplication
+            app.choreRepository.startRealtimeSync(householdId)
+        }
         viewModel.refreshData()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val app = application as KasamaApplication
+        app.choreRepository.stopRealtimeSync()
     }
 
     private fun loadHouseholdChores() {

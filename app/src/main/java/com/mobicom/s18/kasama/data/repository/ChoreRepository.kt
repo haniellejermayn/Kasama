@@ -1,15 +1,20 @@
 package com.mobicom.s18.kasama.data.repository
 
+import android.util.Log
 import androidx.work.*
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
 import com.mobicom.s18.kasama.data.local.entities.PendingDelete
 import com.mobicom.s18.kasama.data.remote.models.FirebaseChore
 import com.mobicom.s18.kasama.utils.RecurringChoreHelper
 import com.mobicom.s18.kasama.workers.SyncWorker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -18,6 +23,9 @@ class ChoreRepository(
     private val database: KasamaDatabase,
     private val workManager: WorkManager
 ) {
+    // Store active listener so we can remove it later
+    private var choresListener: ListenerRegistration? = null
+    private val repositoryScope = CoroutineScope(Dispatchers.IO)
 
     suspend fun createChore(
         householdId: String,
@@ -64,13 +72,11 @@ class ChoreRepository(
         }
     }
 
-    // handles recurring logic
     suspend fun completeChore(choreId: String): Result<Unit> {
         return try {
             val chore = database.choreDao().getChoreByIdOnce(choreId)
                 ?: return Result.failure(Exception("Chore not found"))
 
-            // mark as completed
             val completedChore = chore.copy(
                 isCompleted = true,
                 completedAt = System.currentTimeMillis(),
@@ -79,7 +85,6 @@ class ChoreRepository(
             )
             database.choreDao().update(completedChore)
 
-            // if recurring, create next instance
             if (RecurringChoreHelper.shouldCreateNextInstance(chore.frequency)) {
                 val nextDueDate = RecurringChoreHelper.calculateNextDueDate(
                     chore.dueDate,
@@ -109,13 +114,11 @@ class ChoreRepository(
         }
     }
 
-    // also handles recurring chores
     suspend fun uncompleteChore(choreId: String): Result<Unit> {
         return try {
             val chore = database.choreDao().getChoreByIdOnce(choreId)
                 ?: return Result.failure(Exception("Chore not found"))
 
-            // mark as not completed
             val uncompletedChore = chore.copy(
                 isCompleted = false,
                 completedAt = null,
@@ -124,7 +127,6 @@ class ChoreRepository(
             )
             database.choreDao().update(uncompletedChore)
 
-            // if recurring, delete next instance
             if (RecurringChoreHelper.shouldCreateNextInstance(chore.frequency)) {
                 val nextDueDate = RecurringChoreHelper.calculateNextDueDate(
                     chore.dueDate,
@@ -193,7 +195,7 @@ class ChoreRepository(
     }
 
     fun getActiveChoresWithRecentCompleted(householdId: String): Flow<List<com.mobicom.s18.kasama.data.local.entities.Chore>> {
-        val cutoffTime = System.currentTimeMillis() - (24 * 60 * 60 * 1000) // 24 hours
+        val cutoffTime = System.currentTimeMillis() - (24 * 60 * 60 * 1000)
         return database.choreDao().getActiveChoresWithRecentCompleted(householdId, cutoffTime)
     }
 
@@ -207,7 +209,6 @@ class ChoreRepository(
 
             val chores = snapshot.toObjects(FirebaseChore::class.java)
 
-            // Get all pending deletes for chores
             val pendingDeleteIds = database.pendingDeleteDao()
                 .getAllPendingDeletes()
                 .filter { it.itemType == "chore" }
@@ -215,7 +216,6 @@ class ChoreRepository(
                 .toSet()
 
             chores.forEach { chore ->
-                // Skip if this chore is pending deletion
                 if (chore.id in pendingDeleteIds) {
                     return@forEach
                 }
@@ -226,8 +226,73 @@ class ChoreRepository(
                 }
             }
         } catch (e: Exception) {
-            println("Failed to sync chores from Firebase: ${e.message}")
+            Log.e("ChoreRepository", "Failed to sync chores from Firebase: ${e.message}")
         }
+    }
+
+    // Start real-time listening for chores
+    fun startRealtimeSync(householdId: String) {
+        // Remove any existing listener first
+        stopRealtimeSync()
+
+        Log.d("ChoreRepository", "Starting realtime sync for household: $householdId")
+
+        choresListener = firestore.collection("households")
+            .document(householdId)
+            .collection("chores")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("ChoreRepository", "Realtime sync error: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    repositoryScope.launch {
+                        try {
+                            val pendingDeleteIds = database.pendingDeleteDao()
+                                .getAllPendingDeletes()
+                                .filter { it.itemType == "chore" }
+                                .map { it.itemId }
+                                .toSet()
+
+                            val remoteChoreIds = mutableSetOf<String>()
+
+                            snapshot.documents.forEach { doc ->
+                                val chore = doc.toObject(FirebaseChore::class.java)
+                                if (chore != null && chore.id !in pendingDeleteIds) {
+                                    remoteChoreIds.add(chore.id)
+                                    val localChore = database.choreDao().getChoreByIdOnce(chore.id)
+                                    // Only update if local doesn't exist OR local is already synced
+                                    if (localChore == null || localChore.isSynced) {
+                                        database.choreDao().insert(chore.toEntity(isSynced = true))
+                                    }
+                                }
+                            }
+
+                            // Handle deletions - remove local chores that no longer exist in Firebase
+                            val localChores = database.choreDao().getChoresByHousehold(householdId).first()
+                            localChores.forEach { localChore ->
+                                if (localChore.id !in remoteChoreIds && 
+                                    localChore.isSynced && 
+                                    localChore.id !in pendingDeleteIds) {
+                                    // This chore was deleted by another user
+                                    database.choreDao().delete(localChore)
+                                    Log.d("ChoreRepository", "Deleted chore from remote: ${localChore.id}")
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e("ChoreRepository", "Error processing realtime update: ${e.message}")
+                        }
+                    }
+                }
+            }
+    }
+
+    // Stop real-time listening
+    fun stopRealtimeSync() {
+        choresListener?.remove()
+        choresListener = null
+        Log.d("ChoreRepository", "Stopped realtime sync")
     }
 
     private fun scheduleSyncWork() {
