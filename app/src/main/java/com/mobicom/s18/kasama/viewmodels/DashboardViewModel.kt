@@ -14,7 +14,6 @@ import com.mobicom.s18.kasama.models.HousemateUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -39,7 +38,7 @@ class DashboardViewModel(
     private val _housemates = MutableStateFlow<List<HousemateUI>>(emptyList())
     val housemates: StateFlow<List<HousemateUI>> = _housemates.asStateFlow()
 
-    private val _progressData = MutableStateFlow(Triple(0, "", "")) // percentage, message, progress text
+    private val _progressData = MutableStateFlow(Triple(0, "", ""))
     val progressData: StateFlow<Triple<Int, String, String>> = _progressData.asStateFlow()
 
     private val _householdMemberCache = MutableStateFlow<Map<String, String>>(emptyMap())
@@ -61,18 +60,35 @@ class DashboardViewModel(
 
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH)
 
+    // Store current IDs for refresh
+    private var currentHouseholdId: String? = null
+    private var currentUserId: String? = null
+
     fun loadDashboardData(householdId: String, currentUserId: String) {
+        this.currentHouseholdId = householdId
+        this.currentUserId = currentUserId
+        
         loadAndFilterUserChores(householdId, currentUserId)
         loadRecentNotes(householdId)
         loadHousemates(householdId)
         loadMostProductiveMember(householdId)
     }
 
+    // NEW: Call this when app resumes to refresh data
+    fun refreshData() {
+        val householdId = currentHouseholdId ?: return
+        val userId = currentUserId ?: return
+        loadDashboardData(householdId, userId)
+    }
+
     private fun loadAndFilterUserChores(householdId: String, currentUserId: String) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
+                // Sync from Firebase first (will update Room)
                 choreRepository.syncChoresFromFirestore(householdId)
+                
+                // Collect from Room - this will automatically update when Room changes
                 choreRepository.getActiveChoresWithRecentCompleted(householdId).collect { choreEntities ->
                     val userChores = choreEntities.filter { it.assignedTo == currentUserId }
 
@@ -83,12 +99,16 @@ class DashboardViewModel(
                         set(Calendar.MILLISECOND, 0)
                     }
 
-                    // --- FILTERING LOGIC --- //
                     val overdueList = mutableListOf<ChoreUI>()
                     val todayList = mutableListOf<ChoreUI>()
 
+                    // Use cached member names instead of fetching each time
+                    val memberCache = _householdMemberCache.value
+
                     userChores.forEach { chore ->
-                        val assignedUser = userRepository.getUserById(chore.assignedTo).getOrNull()
+                        val assignedName = memberCache[chore.assignedTo] 
+                            ?: userRepository.getUserById(chore.assignedTo).getOrNull()?.displayName
+                        
                         val choreDate = Calendar.getInstance().apply {
                             timeInMillis = chore.dueDate
                             set(Calendar.HOUR_OF_DAY, 0)
@@ -105,7 +125,7 @@ class DashboardViewModel(
                             title = chore.title,
                             dueDate = dateFormat.format(Date(chore.dueDate)),
                             frequency = chore.frequency ?: "Never",
-                            assignedToNames = listOfNotNull(assignedUser?.displayName),
+                            assignedToNames = listOfNotNull(assignedName),
                             isCompleted = chore.isCompleted,
                             isOverdue = isOverdue,
                             isSynced = chore.isSynced
@@ -119,79 +139,7 @@ class DashboardViewModel(
 
                     _overdueChores.value = overdueList
                     _todayChores.value = todayList
-
-                    // Update progress based on all chores for the user
                     updateProgress(overdueList + todayList)
-                }
-            } catch (e: Exception) {
-                _error.value = e.message
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    /*
-    private fun loadUserOverdueChores(householdId: String, currentUserId: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                choreRepository.syncChoresFromFirestore(householdId)
-                choreRepository.getActiveChoresWithRecentCompleted(householdId).collect { choreEntities ->
-                    val userChores = choreEntities.filter { it.assignedTo == currentUserId }
-
-                    val today = Calendar.getInstance()
-                    today.set(Calendar.HOUR_OF_DAY, 0)
-                    today.set(Calendar.MINUTE, 0)
-                    today.set(Calendar.SECOND, 0)
-                    today.set(Calendar.MILLISECOND, 0)
-
-                    // DASHBOARD FILTERING RULES:
-                    // 1. Show incomplete chores that are overdue OR due today
-                    // 2. Show completed chores that are due today only
-                    val filteredChores = userChores.filter { chore ->
-                        val choreDate = Calendar.getInstance().apply {
-                            timeInMillis = chore.dueDate
-                            set(Calendar.HOUR_OF_DAY, 0)
-                            set(Calendar.MINUTE, 0)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }
-
-                        val isOverdue = choreDate.before(today)
-
-                        when {
-                            // Incomplete chores: show if overdue OR due today
-                            chore.isOverdue -> isOverdue
-                        }
-                    }
-
-                    val choreUIs = filteredChores.map { chore ->
-                        val assignedUser = userRepository.getUserById(chore.assignedTo).getOrNull()
-                        val choreDate = Calendar.getInstance().apply {
-                            timeInMillis = chore.dueDate
-                            set(Calendar.HOUR_OF_DAY, 0)
-                            set(Calendar.MINUTE, 0)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }
-                        val isOverdue = choreDate.before(today) && !chore.isCompleted
-
-                        ChoreUI(
-                            id = chore.id,
-                            title = chore.title,
-                            dueDate = dateFormat.format(Date(chore.dueDate)),
-                            frequency = chore.frequency ?: "Never",
-                            assignedToNames = listOfNotNull(assignedUser?.displayName),
-                            isCompleted = chore.isCompleted,
-                            isOverdue = isOverdue
-                        )
-                    }
-
-                    _chores.value = choreUIs
-
-                    // Update progress based on all filtered chores
-                    updateProgress(choreUIs)
                     _isLoading.value = false
                 }
             } catch (e: Exception) {
@@ -201,85 +149,11 @@ class DashboardViewModel(
         }
     }
 
-    private fun loadUserTodayChores(householdId: String, currentUserId: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                choreRepository.syncChoresFromFirestore(householdId)
-                choreRepository.getActiveChoresWithRecentCompleted(householdId).collect { choreEntities ->
-                    val userChores = choreEntities.filter { it.assignedTo == currentUserId }
-
-                    val today = Calendar.getInstance()
-                    today.set(Calendar.HOUR_OF_DAY, 0)
-                    today.set(Calendar.MINUTE, 0)
-                    today.set(Calendar.SECOND, 0)
-                    today.set(Calendar.MILLISECOND, 0)
-
-                    // DASHBOARD FILTERING RULES:
-                    // 1. Show incomplete chores that are overdue OR due today
-                    // 2. Show completed chores that are due today only
-                    val filteredChores = userChores.filter { chore ->
-                        val choreDate = Calendar.getInstance().apply {
-                            timeInMillis = chore.dueDate
-                            set(Calendar.HOUR_OF_DAY, 0)
-                            set(Calendar.MINUTE, 0)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }
-
-                        val isDueToday = choreDate.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
-                                choreDate.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
-                        val isOverdue = choreDate.before(today)
-
-                        when {
-                            // Completed chores: only show if due today
-                            chore.isCompleted -> isDueToday
-                            // Incomplete chores: show if overdue OR due today
-                            else -> isDueToday
-                        }
-                    }
-
-                    val choreUIs = filteredChores.map { chore ->
-                        val assignedUser = userRepository.getUserById(chore.assignedTo).getOrNull()
-                        val choreDate = Calendar.getInstance().apply {
-                            timeInMillis = chore.dueDate
-                            set(Calendar.HOUR_OF_DAY, 0)
-                            set(Calendar.MINUTE, 0)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }
-                        val isOverdue = choreDate.before(today) && !chore.isCompleted
-
-                        ChoreUI(
-                            id = chore.id,
-                            title = chore.title,
-                            dueDate = dateFormat.format(Date(chore.dueDate)),
-                            frequency = chore.frequency ?: "Never",
-                            assignedToNames = listOfNotNull(assignedUser?.displayName),
-                            isCompleted = chore.isCompleted,
-                            isOverdue = isOverdue
-                        )
-                    }
-
-                    _chores.value = choreUIs
-
-                    // Update progress based on all filtered chores
-                    updateProgress(choreUIs)
-                    _isLoading.value = false
-                }
-            } catch (e: Exception) {
-                _error.value = e.message
-                _isLoading.value = false
-            }
-        }
-    }
-    */
     private fun loadRecentNotes(householdId: String) {
         viewModelScope.launch {
             try {
                 noteRepository.syncNotesFromFirestore(householdId)
                 noteRepository.getNotesByHousehold(householdId).collect { noteEntities ->
-                    // Calculate start of current week (Monday)
                     val now = Calendar.getInstance()
                     val startOfWeek = Calendar.getInstance().apply {
                         set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
@@ -289,19 +163,21 @@ class DashboardViewModel(
                         set(Calendar.MILLISECOND, 0)
                     }
 
-                    // Filter notes from this week
                     val thisWeekNotes = noteEntities.filter { it.createdAt >= startOfWeek.timeInMillis }
 
-                    // Update recent notes count (last 7 days for the info card)
                     val sevenDaysAgo = System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000)
                     val recentNotes = noteEntities.filter { it.createdAt >= sevenDaysAgo }
                     _recentNotesCount.value = recentNotes.size
 
-                    // Format notes for display
                     val noteDateFormat = SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH)
+                    val memberCache = _householdMemberCache.value
+                    
                     val noteUIs = thisWeekNotes.take(6).map { note ->
+                        val creatorName = memberCache.values.find { 
+                            memberCache.entries.find { entry -> entry.value == it }?.key == note.createdBy 
+                        } ?: userRepository.getUserById(note.createdBy).getOrNull()?.displayName ?: "Unknown"
+                        
                         val creator = userRepository.getUserById(note.createdBy).getOrNull()
-                        val creatorName = creator?.displayName ?: "Unknown"
                         val createdAtFormatted = noteDateFormat.format(Date(note.createdAt))
 
                         NoteUI(
@@ -325,11 +201,12 @@ class DashboardViewModel(
     private fun loadHousemates(householdId: String) {
         viewModelScope.launch {
             try {
+                // Always refresh household data from repository (which checks local first, then Firebase)
                 val householdResult = householdRepository.getHouseholdById(householdId)
                 if (householdResult.isSuccess) {
                     val household = householdResult.getOrNull()
                     if (household != null) {
-                        // Build the member cache ONCE
+                        // Always rebuild the member cache
                         val memberCache = mutableMapOf<String, String>()
                         household.memberIds.forEach { userId ->
                             val userResult = userRepository.getUserById(userId)
@@ -339,10 +216,9 @@ class DashboardViewModel(
                             }
                         }
                         _householdMemberCache.value = memberCache
-                        
-                        // Collect the Flow continuously to react to changes
+
+                        // Collect chores to calculate remaining chores per housemate
                         choreRepository.getActiveChoresByHousehold(householdId).collect { allChores ->
-                            // Set up today's date for comparison
                             val today = Calendar.getInstance().apply {
                                 set(Calendar.HOUR_OF_DAY, 0)
                                 set(Calendar.MINUTE, 0)
@@ -351,11 +227,11 @@ class DashboardViewModel(
                             }
 
                             val housemateUIs = household.memberIds.mapNotNull { userId ->
+                                val userName = memberCache[userId]
                                 val userResult = userRepository.getUserById(userId)
                                 val user = userResult.getOrNull()
 
                                 if (user != null) {
-                                    // Filter chores using the same logic as dashboard
                                     val userChores = allChores.filter { chore ->
                                         if (chore.assignedTo != userId || chore.isCompleted) return@filter false
 
@@ -370,7 +246,6 @@ class DashboardViewModel(
                                         val isDueToday = choreDate.timeInMillis == today.timeInMillis
                                         val isOverdue = choreDate.before(today)
 
-                                        // Include if overdue OR due today (and incomplete)
                                         isOverdue || isDueToday
                                     }
 
@@ -400,6 +275,8 @@ class DashboardViewModel(
                     val household = householdResult.getOrNull()
                     if (household != null) {
                         choreRepository.getChoresByHousehold(householdId).collect { allChores ->
+                            val memberCache = _householdMemberCache.value
+                            
                             val memberCompletions = household.memberIds.map { userId ->
                                 val completedCount = allChores.count {
                                     it.assignedTo == userId && it.isCompleted
@@ -408,12 +285,11 @@ class DashboardViewModel(
                             }.sortedByDescending { it.second }
 
                             when {
-                                // No one has completed any chores
                                 memberCompletions.isEmpty() || memberCompletions.all { it.second == 0 } -> {
                                     _mostProductiveMember.value = Triple(
                                         "No chores completed yet",
                                         null,
-                                        false // Don't show profile
+                                        false
                                     )
                                 }
                                 else -> {
@@ -421,28 +297,26 @@ class DashboardViewModel(
                                     val topMembers = memberCompletions.filter { it.second == topScore }
 
                                     when {
-                                        // Clear winner
                                         topMembers.size == 1 -> {
                                             val topMemberId = topMembers.first().first
+                                            val userName = memberCache[topMemberId]
                                             val user = userRepository.getUserById(topMemberId).getOrNull()
                                             _mostProductiveMember.value = Triple(
-                                                user?.displayName ?: "Unknown",
+                                                userName ?: user?.displayName ?: "Unknown",
                                                 user?.profilePictureUrl,
-                                                true // Show profile
+                                                true
                                             )
                                         }
-                                        // Everyone is tied
                                         topMembers.size == household.memberIds.size -> {
                                             _mostProductiveMember.value = Triple(
                                                 "Everyone is tied! 🎉",
                                                 null,
-                                                false // Don't show profile
+                                                false
                                             )
                                         }
-                                        // Multiple people tied for first
                                         else -> {
                                             val names = topMembers.mapNotNull { (userId, _) ->
-                                                userRepository.getUserById(userId).getOrNull()?.displayName
+                                                memberCache[userId] ?: userRepository.getUserById(userId).getOrNull()?.displayName
                                             }
                                             val displayText = when (names.size) {
                                                 2 -> "${names[0]} & ${names[1]}"
@@ -451,7 +325,7 @@ class DashboardViewModel(
                                             _mostProductiveMember.value = Triple(
                                                 "$displayText (Tied)",
                                                 null,
-                                                false // Don't show profile
+                                                false
                                             )
                                         }
                                     }
