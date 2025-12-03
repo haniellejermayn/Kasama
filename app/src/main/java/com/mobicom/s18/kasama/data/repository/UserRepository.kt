@@ -105,8 +105,16 @@ class UserRepository (
         }
     }
 
+    // Check local cache first, then try Firebase
     suspend fun getUserById(userId: String): Result<FirebaseUser> {
         return try {
+            // Try local cache first
+            val localUser = database.userDao().getUserByIdOnce(userId)
+            if (localUser != null) {
+                return Result.success(localUser.toFirebaseModel())
+            }
+
+            // Fall back to Firestore
             val doc = firestore.collection("users")
                 .document(userId)
                 .get()
@@ -115,8 +123,16 @@ class UserRepository (
             val user = doc.toObject(FirebaseUser::class.java)
                 ?: throw Exception("User not found")
 
+            // Cache locally for future use
+            database.userDao().insert(user.toEntity())
+
             Result.success(user)
         } catch (e: Exception) {
+            // If Firestore fails, try local one more time
+            val localUser = database.userDao().getUserByIdOnce(userId)
+            if (localUser != null) {
+                return Result.success(localUser.toFirebaseModel())
+            }
             Result.failure(e)
         }
     }

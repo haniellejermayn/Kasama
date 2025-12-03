@@ -23,3 +23,15 @@ data class FirebaseHousehold(
         )
     }
 }
+
+// Extension function to convert Room entity back to Firebase model
+fun Household.toFirebaseModel(): FirebaseHousehold {
+    return FirebaseHousehold(
+        id = id,
+        name = name,
+        inviteCode = inviteCode,
+        createdBy = createdBy,
+        createdAt = createdAt,
+        memberIds = memberIds
+    )
+}

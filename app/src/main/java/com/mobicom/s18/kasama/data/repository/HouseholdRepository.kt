@@ -377,6 +377,21 @@ class HouseholdRepository(
         householdId: String
     ): Result<FirebaseHousehold> {
         return try {
+            // Try local cache first
+            val localHousehold = database.householdDao().getHouseholdByIdOnce(householdId)
+            if (localHousehold != null) {
+                return Result.success(
+                    FirebaseHousehold(
+                        id = localHousehold.id,
+                        name = localHousehold.name,
+                        inviteCode = localHousehold.inviteCode,
+                        createdBy = localHousehold.createdBy,
+                        memberIds = localHousehold.memberIds
+                    )
+                )
+            }
+
+            // Fall back to Firestore
             val doc = firestore.collection("households")
                 .document(householdId)
                 .get()
@@ -385,8 +400,24 @@ class HouseholdRepository(
             val household = doc.toObject(FirebaseHousehold::class.java)
                 ?: throw Exception("Household not found")
 
+            // Cache locally
+            database.householdDao().insert(household.toEntity())
+
             Result.success(household)
         } catch (e: Exception) {
+            // If Firestore fails, try local one more time
+            val localHousehold = database.householdDao().getHouseholdByIdOnce(householdId)
+            if (localHousehold != null) {
+                return Result.success(
+                    FirebaseHousehold(
+                        id = localHousehold.id,
+                        name = localHousehold.name,
+                        inviteCode = localHousehold.inviteCode,
+                        createdBy = localHousehold.createdBy,
+                        memberIds = localHousehold.memberIds
+                    )
+                )
+            }
             Result.failure(e)
         }
     }

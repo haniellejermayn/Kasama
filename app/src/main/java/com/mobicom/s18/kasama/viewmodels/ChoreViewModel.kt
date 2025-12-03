@@ -136,8 +136,6 @@ class ChoreViewModel(
     }
 
     private suspend fun loadMemberCache(householdId: String) {
-        if (_householdMemberCache.value.isNotEmpty()) return // Already loaded
-
         val householdResult = householdRepository.getHouseholdById(householdId)
         if (householdResult.isSuccess) {
             val household = householdResult.getOrNull()
