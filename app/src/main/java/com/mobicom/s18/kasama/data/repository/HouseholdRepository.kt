@@ -9,7 +9,6 @@ import com.mobicom.s18.kasama.data.remote.models.FirebaseUser
 import com.mobicom.s18.kasama.data.remote.models.FirebaseHousehold
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
-import android.util.Log
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,9 +17,9 @@ import kotlinx.coroutines.launch
 
 class HouseholdRepository(
     private val firestore: FirebaseFirestore,
-    private val database: KasamaDatabase
-    private var householdListener: ListenerRegistration? = null
-    private val repositoryScope = CoroutineScope(Dispatchers.IO)
+    private val database: KasamaDatabase,
+    private var householdListener: ListenerRegistration? = null,
+    private val repositoryScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
 
     private suspend fun generateInviteCode(): String {
