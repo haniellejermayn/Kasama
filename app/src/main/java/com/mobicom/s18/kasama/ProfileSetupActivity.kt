@@ -89,6 +89,7 @@ class ProfileSetupActivity : AppCompatActivity() {
             try {
                 var profilePictureUrl: String? = null
                 if (selectedImageUri != null) {
+                    binding.progressBarUpload.visibility = View.VISIBLE
                     Toast.makeText(
                         this@ProfileSetupActivity,
                         "Uploading image...",
@@ -102,7 +103,9 @@ class ProfileSetupActivity : AppCompatActivity() {
 
                     if (uploadResult.isSuccess) {
                         profilePictureUrl = uploadResult.getOrNull()
+                        binding.progressBarUpload.visibility = View.GONE
                     } else {
+                        binding.progressBarUpload.visibility = View.GONE
                         throw uploadResult.exceptionOrNull() ?: Exception("Upload failed")
                     }
                 }
@@ -188,6 +191,9 @@ class ProfileSetupActivity : AppCompatActivity() {
                 binding.edittextName.setText(user?.displayName)
                 binding.edittextPhoneNum.setText(user?.phoneNumber)
 
+                // Get old profile picture before updating
+                val oldProfilePic = user?.profilePictureUrl
+
                 if (user?.profilePictureUrl != null) {
                     Glide.with(this@ProfileSetupActivity)
                         .load(user.profilePictureUrl)
@@ -217,8 +223,9 @@ class ProfileSetupActivity : AppCompatActivity() {
                     val oldNum = user?.phoneNumber ?: ""
                     val oldBirthdate = user?.birthdate ?: 0L
 
+                    val newProfilePic = selectedImageUri.toString()
 
-                    if ((newBirthdate == 0L || newBirthdate == oldBirthdate) && newName == oldName && newNum == oldNum) {
+                    if ((newBirthdate == 0L || newBirthdate == oldBirthdate) && newName == oldName && newNum == oldNum && oldProfilePic == newProfilePic) {
                         Toast.makeText(this@ProfileSetupActivity, "No changes made.", Toast.LENGTH_SHORT).show()
                     } else {
                         handleEditProfile()

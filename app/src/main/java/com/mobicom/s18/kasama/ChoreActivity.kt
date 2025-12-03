@@ -3,6 +3,7 @@ package com.mobicom.s18.kasama
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
+import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -21,8 +22,8 @@ import com.mobicom.s18.kasama.utils.LoadingUtils.hideLoading
 // TODO: make clickable buttons more prominent
 // DONE TODO: change UI of note, make it easier to read
 // DONE(?) TODO: notifications
-// TODO: make the filter thing funnel thing
-// TODO: color change (idk what)
+// DONE TODO: make the filter thing funnel thing
+// TODO: color change (idk what) -- change the whole theme ig, but i think we can defend this if ever
 
 class ChoreActivity : AppCompatActivity() {
 
@@ -139,7 +140,28 @@ class ChoreActivity : AppCompatActivity() {
     }
 
     private fun setupFilterTabs() {
-        binding.textOptionToday.setOnClickListener {
+        val filterIcon = binding.filterIcon
+
+        filterIcon.setOnClickListener {
+            val popup = PopupMenu(this, filterIcon)
+            popup.menuInflater.inflate(R.menu.chore_filter_menu, popup.menu)
+
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.filter_today -> updateDisplayedChores("today")
+                    R.id.filter_overdue -> updateDisplayedChores("overdue")
+                    R.id.filter_week -> updateDisplayedChores("this week")
+                    R.id.filter_month -> updateDisplayedChores("this month")
+                    R.id.filter_all -> updateDisplayedChores("all")
+                }
+                true
+            }
+
+            popup.show()
+        }
+
+
+        /*binding.textOptionToday.setOnClickListener {
             updateDisplayedChores("today")
             highlightTab(binding.textOptionToday)
         }
@@ -162,7 +184,7 @@ class ChoreActivity : AppCompatActivity() {
         binding.textOptionOverdue.setOnClickListener {
             updateDisplayedChores("overdue")
             highlightTab(binding.textOptionOverdue)
-        }
+        }*/
     }
 
     private fun updateDisplayedChores(filter: String) {
@@ -198,9 +220,18 @@ class ChoreActivity : AppCompatActivity() {
             "all" -> "All Chores"
             else -> ""
         }
+
+        binding.currFilter.text = when (filter) {
+            "today" -> "Today"
+            "this week" -> "This Week"
+            "this month" -> "This Month"
+            "overdue" -> "Overdue"
+            "all" -> "All Chores"
+            else -> ""
+        }
     }
 
-    private fun highlightTab(activeTextView: TextView) {
+    /*private fun highlightTab(activeTextView: TextView) {
         val tabs = listOf(
             binding.textOptionToday to binding.bottomBorderToday,
             binding.textOptionOverdue to binding.bottomBorderOverdue,
@@ -218,5 +249,5 @@ class ChoreActivity : AppCompatActivity() {
                 borderView.visibility = View.GONE
             }
         }
-    }
+    }*/
 }
