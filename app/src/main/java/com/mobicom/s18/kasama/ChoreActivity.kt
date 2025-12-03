@@ -53,6 +53,11 @@ class ChoreActivity : AppCompatActivity() {
         loadHouseholdChores()
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.refreshData()
+    }
+
     private fun loadHouseholdChores() {
         showLoading("Loading chores...")
         lifecycleScope.launch {

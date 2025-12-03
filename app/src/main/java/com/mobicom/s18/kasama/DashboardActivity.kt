@@ -88,6 +88,12 @@ class DashboardActivity : AppCompatActivity() {
         handleNotificationIntent(intent)
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Refresh data when coming back to the activity
+        viewModel.refreshData()
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,

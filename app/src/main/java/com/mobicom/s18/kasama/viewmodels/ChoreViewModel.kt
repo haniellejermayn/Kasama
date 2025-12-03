@@ -49,8 +49,12 @@ class ChoreViewModel(
     val householdMemberCache: StateFlow<Map<String, String>> = _householdMemberCache.asStateFlow()
 
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH)
+    private var currentHouseholdId: String? = null
+    private var currentUserId: String? = null
 
-    fun loadChoresByHousehold(householdId: String) {
+    fun loadChoresGroupedByUser(householdId: String, currentUserId: String) {
+        this.currentHouseholdId = householdId
+        this.currentUserId = currentUserId
         viewModelScope.launch {
             _isLoading.value = true
             try {
@@ -277,6 +281,12 @@ class ChoreViewModel(
     private fun isSameMonth(c1: Calendar, c2: Calendar): Boolean {
         return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR) &&
                 c1.get(Calendar.MONTH) == c2.get(Calendar.MONTH)
+    }
+
+    fun refreshData() {
+        val householdId = currentHouseholdId ?: return
+        val userId = currentUserId ?: return
+        loadChoresGroupedByUser(householdId, userId)
     }
 
     class Factory(
