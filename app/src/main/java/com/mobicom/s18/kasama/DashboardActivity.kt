@@ -209,73 +209,46 @@ class DashboardActivity : AppCompatActivity() {
         binding.dashboardChoreTodayRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.dashboardChoreTodayRecyclerView.adapter = todayChoreAdapter
 
-        /*
-        choreAdapter.setOnChoreClickListener { chore ->
-            lifecycleScope.launch {
-                val householdId = currentHouseholdId
-                val userId = currentUserId
-                if (householdId == null || userId == null) {
-                    Toast.makeText(this@DashboardActivity, "User data not loaded yet", Toast.LENGTH_SHORT).show()
-                    return@launch
-                }
-
-                val app = application as KasamaApplication
-                val householdResult = app.householdRepository.getHouseholdById(householdId)
-                if (householdResult.isSuccess) {
-                    val household = householdResult.getOrNull()
-                    val housemateNames = household?.memberIds?.mapNotNull { memberUserId ->
-                        app.userRepository.getUserById(memberUserId).getOrNull()?.displayName
-                    } ?: emptyList()
-
-                    showChoreBottomSheet(
-                        context = this@DashboardActivity,
-                        availableHousemates = housemateNames,
-                        householdId = householdId,
-                        currentUserId = userId,
-                        chore = chore,
-                        onSave = {
-                            viewModel.loadDashboardData(householdId, userId)
-                        }
-                    )
-                }
-            }
-        }
-
-        choreAdapter.setOnChoreCompletedListener { chore ->
-            currentHouseholdId?.let { householdId ->
-                viewModel.toggleChoreCompletion(chore.id, householdId)
-            }
-
-        }
-        */
-
         val choreClickListener: (ChoreUI) -> Unit = { chore ->
             lifecycleScope.launch {
-                val householdId = currentHouseholdId
-                val userId = currentUserId
-                if (householdId == null || userId == null) {
-                    Toast.makeText(this@DashboardActivity, "User data not loaded yet", Toast.LENGTH_SHORT).show()
-                    return@launch
-                }
+                showLoading("Loading...")
 
-                val app = application as KasamaApplication
-                val householdResult = app.householdRepository.getHouseholdById(householdId)
-                if (householdResult.isSuccess) {
-                    val household = householdResult.getOrNull()
-                    val housemateNames = household?.memberIds?.mapNotNull { memberUserId ->
-                        app.userRepository.getUserById(memberUserId).getOrNull()?.displayName
-                    } ?: emptyList()
+                try {
+                    val householdId = currentHouseholdId
+                    val userId = currentUserId
 
-                    showChoreBottomSheet(
-                        context = this@DashboardActivity,
-                        availableHousemates = housemateNames,
-                        householdId = householdId,
-                        currentUserId = userId,
-                        chore = chore,
-                        onSave = {
-                            viewModel.loadDashboardData(householdId, userId)
-                        }
-                    )
+                    if (householdId == null || userId == null) {
+                        Toast.makeText(
+                            this@DashboardActivity,
+                            "User data not loaded yet",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@launch
+                    }
+
+                    val app = application as KasamaApplication
+                    val householdResult = app.householdRepository.getHouseholdById(householdId)
+
+                    if (householdResult.isSuccess) {
+                        val household = householdResult.getOrNull()
+
+                        val housemateNames = household?.memberIds?.mapNotNull { memberUserId ->
+                            app.userRepository.getUserById(memberUserId).getOrNull()?.displayName
+                        } ?: emptyList()
+
+                        showChoreBottomSheet(
+                            context = this@DashboardActivity,
+                            availableHousemates = housemateNames,
+                            householdId = householdId,
+                            currentUserId = userId,
+                            chore = chore,
+                            onSave = {
+                                viewModel.loadDashboardData(householdId, userId)
+                            }
+                        )
+                    }
+                } finally {
+                    hideLoading()
                 }
             }
         }
@@ -433,32 +406,42 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun setupButtonListeners() {
         binding.buttonNewChore.setOnClickListener {
+            showLoading("Loading...")
+
             val householdId = currentHouseholdId
             val userId = currentUserId
+
             if (householdId == null || userId == null) {
+                hideLoading()
                 Toast.makeText(this, "User data not loaded yet", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             lifecycleScope.launch {
-                val app = application as KasamaApplication
-                val householdResult = app.householdRepository.getHouseholdById(householdId)
-                if (householdResult.isSuccess) {
-                    val household = householdResult.getOrNull()
-                    val housemateNames = household?.memberIds?.mapNotNull { memberUserId ->
-                        app.userRepository.getUserById(memberUserId).getOrNull()?.displayName
-                    } ?: emptyList()
+                try {
+                    val app = application as KasamaApplication
+                    val householdResult = app.householdRepository.getHouseholdById(householdId)
 
-                    showChoreBottomSheet(
-                        context = this@DashboardActivity,
-                        availableHousemates = housemateNames,
-                        householdId = householdId,
-                        currentUserId = userId,
-                        chore = null,
-                        onSave = {
-                            viewModel.loadDashboardData(householdId, userId)
-                        }
-                    )
+                    if (householdResult.isSuccess) {
+                        val household = householdResult.getOrNull()
+
+                        val housemateNames = household?.memberIds?.mapNotNull { memberUserId ->
+                            app.userRepository.getUserById(memberUserId).getOrNull()?.displayName
+                        } ?: emptyList()
+
+                        showChoreBottomSheet(
+                            context = this@DashboardActivity,
+                            availableHousemates = housemateNames,
+                            householdId = householdId,
+                            currentUserId = userId,
+                            chore = null,
+                            onSave = {
+                                viewModel.loadDashboardData(householdId, userId)
+                            }
+                        )
+                    }
+                } finally {
+                    hideLoading()
                 }
             }
         }
