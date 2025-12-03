@@ -18,8 +18,6 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-// TODO: implement offline-first chore creation through this dialog ui (cache assignees)
-
 fun showChoreBottomSheet(
     context: Context,
     availableHousemates: List<String>,
@@ -135,12 +133,22 @@ fun showChoreBottomSheet(
             .setPositiveButton("Delete") { _, _ ->
                 chore?.let { choreToDelete ->
                     (context as? LifecycleOwner)?.lifecycleScope?.launch {
+                        // show loading
+                        binding.buttonDelete.isEnabled = false
+                        binding.buttonSave.isEnabled = false
+                        binding.buttonCancel.isEnabled = false
+                        binding.buttonDelete.text = "Deleting..."
+
                         val result = app.choreRepository.deleteChore(householdId, choreToDelete.id)
                         if (result.isSuccess) {
                             Toast.makeText(context, "Chore deleted", Toast.LENGTH_SHORT).show()
                             onSave()
                             bottomSheet.dismiss()
                         } else {
+                            binding.buttonDelete.isEnabled = true
+                            binding.buttonSave.isEnabled = true
+                            binding.buttonCancel.isEnabled = true
+                            binding.buttonDelete.text = "Delete"
                             Toast.makeText(context, "Failed to delete chore", Toast.LENGTH_SHORT).show()
                         }
                     }
@@ -170,6 +178,12 @@ fun showChoreBottomSheet(
                 Toast.makeText(context, "Please select a due date", Toast.LENGTH_SHORT).show()
             }
             else -> {
+                // Disable buttons and show loading
+                binding.buttonSave.isEnabled = false
+                binding.buttonCancel.isEnabled = false
+                binding.buttonDelete.isEnabled = false
+                binding.buttonSave.text = if (chore == null) "Creating..." else "Updating..."
+
                 (context as? LifecycleOwner)?.lifecycleScope?.launch {
                     try {
                         val dueDate = dateFormat.parse(dueDateText)?.time ?: System.currentTimeMillis()
@@ -191,6 +205,11 @@ fun showChoreBottomSheet(
                                 onSave()
                                 bottomSheet.dismiss()
                             } else {
+                                // Re-enable on failure
+                                binding.buttonSave.isEnabled = true
+                                binding.buttonCancel.isEnabled = true
+                                binding.buttonDelete.isEnabled = true
+                                binding.buttonSave.text = "Save"
                                 Toast.makeText(context, "Failed to create chore", Toast.LENGTH_SHORT).show()
                             }
                         } else {
@@ -216,11 +235,21 @@ fun showChoreBottomSheet(
                                     onSave()
                                     bottomSheet.dismiss()
                                 } else {
+                                    // Re-enable on failure
+                                    binding.buttonSave.isEnabled = true
+                                    binding.buttonCancel.isEnabled = true
+                                    binding.buttonDelete.isEnabled = true
+                                    binding.buttonSave.text = "Save"
                                     Toast.makeText(context, "Failed to update chore", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
                     } catch (e: Exception) {
+                        // Re-enable on failure
+                        binding.buttonSave.isEnabled = true
+                        binding.buttonCancel.isEnabled = true
+                        binding.buttonDelete.isEnabled = true
+                        binding.buttonSave.text = "Save"
                         Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }

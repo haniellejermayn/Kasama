@@ -45,12 +45,23 @@ fun showNoteBottomSheet(
             .setPositiveButton("Delete") { _, _ ->
                 note?.let { noteToDelete ->
                     (context as? LifecycleOwner)?.lifecycleScope?.launch {
+                        // Show loading
+                        binding.buttonDelete.isEnabled = false
+                        binding.buttonSave.isEnabled = false
+                        binding.buttonCancel.isEnabled = false
+                        binding.buttonDelete.text = "Deleting..."
+
                         val result = app.noteRepository.deleteNote(householdId, noteToDelete.id)
                         if (result.isSuccess) {
                             Toast.makeText(context, "Note deleted", Toast.LENGTH_SHORT).show()
                             onSave()
                             bottomSheet.dismiss()
                         } else {
+                            // Re-enable on failure
+                            binding.buttonDelete.isEnabled = true
+                            binding.buttonSave.isEnabled = true
+                            binding.buttonCancel.isEnabled = true
+                            binding.buttonDelete.text = "Delete"
                             Toast.makeText(context, "Failed to delete note", Toast.LENGTH_SHORT).show()
                         }
                     }
@@ -73,6 +84,12 @@ fun showNoteBottomSheet(
             return@setOnClickListener
         }
 
+        // Disable buttons and show loading
+        binding.buttonSave.isEnabled = false
+        binding.buttonCancel.isEnabled = false
+        binding.buttonDelete.isEnabled = false
+        binding.buttonSave.text = if (note == null) "Creating..." else "Updating..."
+
         (context as? LifecycleOwner)?.lifecycleScope?.launch {
             try {
                 if (note == null) {
@@ -90,6 +107,11 @@ fun showNoteBottomSheet(
                         onSave()
                         bottomSheet.dismiss()
                     } else {
+                        // Re-enable on failure
+                        binding.buttonSave.isEnabled = true
+                        binding.buttonCancel.isEnabled = true
+                        binding.buttonDelete.isEnabled = true
+                        binding.buttonSave.text = "Save"
                         Toast.makeText(context, "Failed to create note", Toast.LENGTH_SHORT).show()
                     }
                 } else {
@@ -111,11 +133,21 @@ fun showNoteBottomSheet(
                             onSave()
                             bottomSheet.dismiss()
                         } else {
+                            // Re-enable on failure
+                            binding.buttonSave.isEnabled = true
+                            binding.buttonCancel.isEnabled = true
+                            binding.buttonDelete.isEnabled = true
+                            binding.buttonSave.text = "Save"
                             Toast.makeText(context, "Failed to update note", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
             } catch (e: Exception) {
+                // Re-enable on failure
+                binding.buttonSave.isEnabled = true
+                binding.buttonCancel.isEnabled = true
+                binding.buttonDelete.isEnabled = true
+                binding.buttonSave.text = "Save"
                 Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
