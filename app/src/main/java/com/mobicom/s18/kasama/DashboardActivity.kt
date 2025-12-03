@@ -216,19 +216,19 @@ class DashboardActivity : AppCompatActivity() {
         binding.dashboardChoreTodayRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.dashboardChoreTodayRecyclerView.adapter = todayChoreAdapter
 
-        val choreClickListener: (ChoreUI) -> Unit = { chore ->
+        val choreClickListener: (ChoreUI) -> Unit = choreClickListener@{ chore ->
             val householdId = currentHouseholdId
             val userId = currentUserId
             val memberCache = viewModel.householdMemberCache.value
 
             if (householdId == null || userId == null) {
                 Toast.makeText(this, "User data not loaded yet", Toast.LENGTH_SHORT).show()
-                return@let
+                return@choreClickListener
             }
 
             if (memberCache.isEmpty()) {
                 Toast.makeText(this, "Loading household members...", Toast.LENGTH_SHORT).show()
-                return@let
+                return@choreClickListener
             }
 
             showChoreBottomSheet(

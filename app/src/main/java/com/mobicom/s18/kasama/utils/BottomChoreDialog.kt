@@ -47,7 +47,7 @@ fun showChoreBottomSheet(
             selectedAssignee = it.assignedToNames[0]
             binding.textAssignedPerson.text = selectedAssignee
             binding.textAssignedPerson.setTextColor(Color.BLACK)
-\
+
             selectedAssigneeId = nameToIdMap[selectedAssignee]
         }
 
