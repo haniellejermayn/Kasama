@@ -5,12 +5,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.mobicom.s18.kasama.data.local.KasamaDatabase
 import com.mobicom.s18.kasama.data.repository.ChoreRepository
+import com.mobicom.s18.kasama.data.repository.HouseholdRepository
 import com.mobicom.s18.kasama.data.repository.UserRepository
 import com.mobicom.s18.kasama.models.ChoreUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -18,6 +18,7 @@ import java.util.*
 class ChoreViewModel(
     private val choreRepository: ChoreRepository,
     private val userRepository: UserRepository,
+    private val householdRepository: HouseholdRepository,  
     private val database: KasamaDatabase
 ) : ViewModel() {
 
@@ -38,12 +39,14 @@ class ChoreViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    private val _progressData = MutableStateFlow(Triple(0, 0, 0)) // completed, total, percentage
+    private val _progressData = MutableStateFlow(Triple(0, 0, 0))
     val progressData: StateFlow<Triple<Int, Int, Int>> = _progressData.asStateFlow()
 
-    // NEW state flow for grouped chores
     private val _choreSections = MutableStateFlow<List<ChoreSection>>(emptyList())
     val choreSections: StateFlow<List<ChoreSection>> = _choreSections.asStateFlow()
+
+    private val _householdMemberCache = MutableStateFlow<Map<String, String>>(emptyMap())
+    val householdMemberCache: StateFlow<Map<String, String>> = _householdMemberCache.asStateFlow()
 
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH)
 
@@ -79,13 +82,15 @@ class ChoreViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
+                loadMemberCache(householdId)
+
                 choreRepository.syncChoresFromFirestore(householdId)
                 choreRepository.getActiveChoresWithRecentCompleted(householdId).collect { choreEntities ->
-                    // group chores by assignee
                     val groupedChores = choreEntities.groupBy { it.assignedTo }
 
                     val sections = groupedChores.map { (userId, chores) ->
-                        val user = userRepository.getUserById(userId).getOrNull()
+                        // CHANGED: Use cached data instead of fetching
+                        val userName = _householdMemberCache.value[userId] ?: "Unknown"
 
                         val choreUIs = chores.map { chore ->
                             ChoreUI(
@@ -93,26 +98,27 @@ class ChoreViewModel(
                                 title = chore.title,
                                 dueDate = dateFormat.format(Date(chore.dueDate)),
                                 frequency = chore.frequency ?: "Never",
-                                assignedToNames = listOfNotNull(user?.displayName),
+                                assignedToNames = listOf(userName),
                                 isCompleted = chore.isCompleted
                             )
                         }
 
-                        val sortedChores = choreUIs.sortedWith(compareBy<ChoreUI> { it.isCompleted } // incomplete first
-                            .thenComparator { a, b ->
-                                val dateA = dateFormat.parse(a.dueDate)?.time ?: 0L
-                                val dateB = dateFormat.parse(b.dueDate)?.time ?: 0L
+                        val sortedChores = choreUIs.sortedWith(
+                            compareBy<ChoreUI> { it.isCompleted }
+                                .thenComparator { a, b ->
+                                    val dateA = dateFormat.parse(a.dueDate)?.time ?: 0L
+                                    val dateB = dateFormat.parse(b.dueDate)?.time ?: 0L
 
-                                when {
-                                    !a.isCompleted && !b.isCompleted -> dateA.compareTo(dateB) // incomplete ASC
-                                    a.isCompleted && b.isCompleted -> dateB.compareTo(dateA)    // completed DESC
-                                    else -> 0
+                                    when {
+                                        !a.isCompleted && !b.isCompleted -> dateA.compareTo(dateB)
+                                        a.isCompleted && b.isCompleted -> dateB.compareTo(dateA)
+                                        else -> 0
+                                    }
                                 }
-                            }
                         )
 
                         ChoreSection(
-                            userName = user?.displayName ?: "Unknown",
+                            userName = userName,
                             userId = userId,
                             chores = sortedChores,
                             isCurrentUser = userId == currentUserId
@@ -125,6 +131,26 @@ class ChoreViewModel(
             } catch (e: Exception) {
                 _error.value = e.message
                 _isLoading.value = false
+            }
+        }
+    }
+
+    private suspend fun loadMemberCache(householdId: String) {
+        if (_householdMemberCache.value.isNotEmpty()) return // Already loaded
+
+        val householdResult = householdRepository.getHouseholdById(householdId)
+        if (householdResult.isSuccess) {
+            val household = householdResult.getOrNull()
+            if (household != null) {
+                val memberCache = mutableMapOf<String, String>()
+                household.memberIds.forEach { userId ->
+                    val userResult = userRepository.getUserById(userId)
+                    val user = userResult.getOrNull()
+                    if (user != null) {
+                        memberCache[userId] = user.displayName
+                    }
+                }
+                _householdMemberCache.value = memberCache
             }
         }
     }
@@ -196,7 +222,7 @@ class ChoreViewModel(
                 }
 
                 when (frequency.lowercase()) {
-                    "daily" -> isSameDay(today, dueCal) // "daily" might mean "today"
+                    "daily" -> isSameDay(today, dueCal)
                     "weekly" -> isSameWeek(today, dueCal)
                     "monthly" -> isSameMonth(today, dueCal)
                     else -> false
@@ -258,12 +284,13 @@ class ChoreViewModel(
     class Factory(
         private val choreRepository: ChoreRepository,
         private val userRepository: UserRepository,
+        private val householdRepository: HouseholdRepository,
         private val database: KasamaDatabase
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(ChoreViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return ChoreViewModel(choreRepository, userRepository, database) as T
+                return ChoreViewModel(choreRepository, userRepository, householdRepository, database) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

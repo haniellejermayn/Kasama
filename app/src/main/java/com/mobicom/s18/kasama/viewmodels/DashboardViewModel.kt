@@ -42,6 +42,8 @@ class DashboardViewModel(
     private val _progressData = MutableStateFlow(Triple(0, "", "")) // percentage, message, progress text
     val progressData: StateFlow<Triple<Int, String, String>> = _progressData.asStateFlow()
 
+    private val _householdMemberCache = MutableStateFlow<Map<String, String>>(emptyMap())
+    val householdMemberCache: StateFlow<Map<String, String>> = _householdMemberCache.asStateFlow()
 
     private val _mostProductiveMember = MutableStateFlow<Triple<String, String?, Boolean>>(
         Triple("Loading...", null, false)
@@ -327,6 +329,17 @@ class DashboardViewModel(
                 if (householdResult.isSuccess) {
                     val household = householdResult.getOrNull()
                     if (household != null) {
+                        // Build the member cache ONCE
+                        val memberCache = mutableMapOf<String, String>()
+                        household.memberIds.forEach { userId ->
+                            val userResult = userRepository.getUserById(userId)
+                            val user = userResult.getOrNull()
+                            if (user != null) {
+                                memberCache[userId] = user.displayName
+                            }
+                        }
+                        _householdMemberCache.value = memberCache
+                        
                         // Collect the Flow continuously to react to changes
                         choreRepository.getActiveChoresByHousehold(householdId).collect { allChores ->
                             // Set up today's date for comparison

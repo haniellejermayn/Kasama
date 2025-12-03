@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.PopupMenu
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -17,14 +18,6 @@ import kotlinx.coroutines.launch
 import com.mobicom.s18.kasama.utils.LoadingUtils.showLoading
 import com.mobicom.s18.kasama.utils.LoadingUtils.hideLoading
 
-// in progress TODO: loading states for all activities
-   // DONE activities: login, signup, createHousehold, chore, dashboard, invite, joinconfirm
-// TODO: make clickable buttons more prominent
-// DONE TODO: change UI of note, make it easier to read
-// DONE(?) TODO: notifications
-// DONE TODO: make the filter thing funnel thing
-// TODO: color change (idk what) -- change the whole theme ig, but i think we can defend this if ever
-
 class ChoreActivity : AppCompatActivity() {
 
     private lateinit var binding: LayoutChorePageBinding
@@ -32,7 +25,12 @@ class ChoreActivity : AppCompatActivity() {
 
     private val viewModel: ChoreViewModel by viewModels {
         val app = application as KasamaApplication
-        ChoreViewModel.Factory(app.choreRepository, app.userRepository, app.database)
+        ChoreViewModel.Factory(
+            app.choreRepository,
+            app.userRepository,
+            app.householdRepository, 
+            app.database
+        )
     }
 
     private var currentHouseholdId: String? = null
@@ -45,7 +43,6 @@ class ChoreActivity : AppCompatActivity() {
         binding = LayoutChorePageBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Get data from intent
         currentHouseholdId = intent.getStringExtra("household_id")
         currentUserId = intent.getStringExtra("user_id")
 
@@ -61,7 +58,6 @@ class ChoreActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val app = application as KasamaApplication
 
-            // Get household and user IDs if not passed via intent
             if (currentHouseholdId == null || currentUserId == null) {
                 val currentUser = app.firebaseAuth.currentUser
                 if (currentUser != null) {
@@ -90,31 +86,31 @@ class ChoreActivity : AppCompatActivity() {
         binding.choreRecyclerView.adapter = choreSectionAdapter
 
         choreSectionAdapter.setOnChoreClickListener { chore ->
-            lifecycleScope.launch {
-                val app = application as KasamaApplication
-                currentHouseholdId?.let { householdId ->
-                    val householdResult = app.householdRepository.getHouseholdById(householdId)
-                    if (householdResult.isSuccess) {
-                        val household = householdResult.getOrNull()
-                        val housemateNames = household?.memberIds?.mapNotNull { userId ->
-                            app.userRepository.getUserById(userId).getOrNull()?.displayName
-                        } ?: emptyList()
+            val householdId = currentHouseholdId
+            val userId = currentUserId
+            val memberCache = viewModel.householdMemberCache.value
 
-                        showChoreBottomSheet(
-                            context = this@ChoreActivity,
-                            availableHousemates = housemateNames,
-                            householdId = householdId,
-                            currentUserId = currentUserId ?: "",
-                            chore = chore,
-                            onSave = {
-                                currentUserId?.let { userId ->
-                                    viewModel.loadChoresGroupedByUser(householdId, userId)
-                                }
-                            }
-                        )
-                    }
-                }
+            if (householdId == null || userId == null) {
+                Toast.makeText(this, "User data not loaded yet", Toast.LENGTH_SHORT).show()
+                return@setOnChoreClickListener
             }
+
+            if (memberCache.isEmpty()) {
+                Toast.makeText(this, "Loading household members...", Toast.LENGTH_SHORT).show()
+                return@setOnChoreClickListener
+            }
+
+            // No loading needed - opens instantly!
+            showChoreBottomSheet(
+                context = this,
+                memberCache = memberCache,
+                householdId = householdId,
+                currentUserId = userId,
+                chore = chore,
+                onSave = {
+                    viewModel.loadChoresGroupedByUser(householdId, userId)
+                }
+            )
         }
 
         choreSectionAdapter.setOnChoreCompletedListener { chore ->
@@ -159,39 +155,12 @@ class ChoreActivity : AppCompatActivity() {
 
             popup.show()
         }
-
-
-        /*binding.textOptionToday.setOnClickListener {
-            updateDisplayedChores("today")
-            highlightTab(binding.textOptionToday)
-        }
-
-        binding.textOptionWeek.setOnClickListener {
-            updateDisplayedChores("this week")
-            highlightTab(binding.textOptionWeek)
-        }
-
-        binding.textOptionMonth.setOnClickListener {
-            updateDisplayedChores("this month")
-            highlightTab(binding.textOptionMonth)
-        }
-
-        binding.textOptionAll.setOnClickListener {
-            updateDisplayedChores("all")
-            highlightTab(binding.textOptionAll)
-        }
-
-        binding.textOptionOverdue.setOnClickListener {
-            updateDisplayedChores("overdue")
-            highlightTab(binding.textOptionOverdue)
-        }*/
     }
 
     private fun updateDisplayedChores(filter: String) {
         currentFilter = filter
         val filteredSections = viewModel.filterChoresByFrequencyGrouped(filter)
 
-        // Show/hide empty state
         if (filteredSections.isEmpty() || filteredSections.all { it.chores.isEmpty() }) {
             binding.choreRecyclerView.visibility = View.GONE
             binding.emptyStateText.visibility = View.VISIBLE
@@ -230,24 +199,4 @@ class ChoreActivity : AppCompatActivity() {
             else -> ""
         }
     }
-
-    /*private fun highlightTab(activeTextView: TextView) {
-        val tabs = listOf(
-            binding.textOptionToday to binding.bottomBorderToday,
-            binding.textOptionOverdue to binding.bottomBorderOverdue,
-            binding.textOptionWeek to binding.bottomBorderWeek,
-            binding.textOptionMonth to binding.bottomBorderMonth,
-            binding.textOptionAll to binding.bottomBorderAll
-        )
-
-        tabs.forEach { (textView, borderView) ->
-            if (textView == activeTextView) {
-                textView.setTextColor(Color.WHITE)
-                borderView.visibility = View.VISIBLE
-            } else {
-                textView.setTextColor(Color.LTGRAY)
-                borderView.visibility = View.GONE
-            }
-        }
-    }*/
 }
