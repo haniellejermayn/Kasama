@@ -1,6 +1,5 @@
 package com.mobicom.s18.kasama.utils
 
-import android.R
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
@@ -20,7 +19,7 @@ import java.util.*
 
 fun showChoreBottomSheet(
     context: Context,
-    availableHousemates: List<String>,
+    memberCache: Map<String, String>,  
     householdId: String,
     currentUserId: String,
     chore: ChoreUI? = null,
@@ -35,6 +34,10 @@ fun showChoreBottomSheet(
     var selectedAssigneeId: String? = null
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH)
 
+    // Build reverse lookup: displayName -> userId
+    val nameToIdMap = memberCache.entries.associate { it.value to it.key }
+    val housemateNames = memberCache.values.toList()
+
     // Pre-fill if editing
     chore?.let {
         binding.editTextChoreTitle.setText(it.title)
@@ -44,17 +47,8 @@ fun showChoreBottomSheet(
             selectedAssignee = it.assignedToNames[0]
             binding.textAssignedPerson.text = selectedAssignee
             binding.textAssignedPerson.setTextColor(Color.BLACK)
-
-            // Get the user ID for the assigned person
-            (context as? LifecycleOwner)?.lifecycleScope?.launch {
-                val household = app.householdRepository.getHouseholdById(householdId).getOrNull()
-                household?.memberIds?.forEach { userId ->
-                    val user = app.userRepository.getUserById(userId).getOrNull()
-                    if (user?.displayName == selectedAssignee) {
-                        selectedAssigneeId = userId
-                    }
-                }
-            }
+\
+            selectedAssigneeId = nameToIdMap[selectedAssignee]
         }
 
         // Show delete button only when editing
@@ -69,13 +63,11 @@ fun showChoreBottomSheet(
     }
 
     val repeatOptions = arrayOf("Never", "Daily", "Weekly", "Monthly", "Yearly")
-    val adapter = ArrayAdapter(context, R.layout.simple_spinner_item, repeatOptions)
-    adapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
+    val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, repeatOptions)
+    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
     binding.spinnerRepeats.adapter = adapter
 
     chore?.let {
-        // Capitalize the frequency string to match the "repeatOptions" array
-        // "daily" -> "Daily", "Never" -> "Never"
         val frequencyToFind = it.frequency.replaceFirstChar { char ->
             if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
         }
@@ -101,28 +93,15 @@ fun showChoreBottomSheet(
     }
 
     binding.textAssignedPerson.setOnClickListener {
-        (context as? LifecycleOwner)?.lifecycleScope?.launch {
-            val household = app.householdRepository.getHouseholdById(householdId).getOrNull()
-            if (household != null) {
-                val housemateMap = mutableMapOf<String, String>() // name to id mapping
-                household.memberIds.forEach { userId ->
-                    val user = app.userRepository.getUserById(userId).getOrNull()
-                    if (user != null) {
-                        housemateMap[user.displayName] = userId
-                    }
-                }
-
-                showSingleHousemateSelectionDialog(
-                    context,
-                    housemateMap.keys.toList(),
-                    selectedAssignee
-                ) { selected ->
-                    selectedAssignee = selected
-                    selectedAssigneeId = housemateMap[selected]
-                    binding.textAssignedPerson.text = selected
-                    binding.textAssignedPerson.setTextColor(Color.BLACK)
-                }
-            }
+        showSingleHousemateSelectionDialog(
+            context,
+            housemateNames,
+            selectedAssignee
+        ) { selected ->
+            selectedAssignee = selected
+            selectedAssigneeId = nameToIdMap[selected]
+            binding.textAssignedPerson.text = selected
+            binding.textAssignedPerson.setTextColor(Color.BLACK)
         }
     }
 
@@ -133,7 +112,6 @@ fun showChoreBottomSheet(
             .setPositiveButton("Delete") { _, _ ->
                 chore?.let { choreToDelete ->
                     (context as? LifecycleOwner)?.lifecycleScope?.launch {
-                        // show loading
                         binding.buttonDelete.isEnabled = false
                         binding.buttonSave.isEnabled = false
                         binding.buttonCancel.isEnabled = false
@@ -178,7 +156,6 @@ fun showChoreBottomSheet(
                 Toast.makeText(context, "Please select a due date", Toast.LENGTH_SHORT).show()
             }
             else -> {
-                // Disable buttons and show loading
                 binding.buttonSave.isEnabled = false
                 binding.buttonCancel.isEnabled = false
                 binding.buttonDelete.isEnabled = false
@@ -190,7 +167,6 @@ fun showChoreBottomSheet(
                         val frequency = if (repeats == "Never") null else repeats.lowercase()
 
                         if (chore == null) {
-                            // Create new chore
                             val result = app.choreRepository.createChore(
                                 householdId = householdId,
                                 title = title,
@@ -205,7 +181,6 @@ fun showChoreBottomSheet(
                                 onSave()
                                 bottomSheet.dismiss()
                             } else {
-                                // Re-enable on failure
                                 binding.buttonSave.isEnabled = true
                                 binding.buttonCancel.isEnabled = true
                                 binding.buttonDelete.isEnabled = true
@@ -213,7 +188,6 @@ fun showChoreBottomSheet(
                                 Toast.makeText(context, "Failed to create chore", Toast.LENGTH_SHORT).show()
                             }
                         } else {
-                            // Update existing chore
                             val choreEntity = app.database.choreDao().getChoreByIdOnce(chore.id)
                             if (choreEntity != null) {
                                 val updatedChore = com.mobicom.s18.kasama.data.remote.models.FirebaseChore(
@@ -235,7 +209,6 @@ fun showChoreBottomSheet(
                                     onSave()
                                     bottomSheet.dismiss()
                                 } else {
-                                    // Re-enable on failure
                                     binding.buttonSave.isEnabled = true
                                     binding.buttonCancel.isEnabled = true
                                     binding.buttonDelete.isEnabled = true
@@ -245,7 +218,6 @@ fun showChoreBottomSheet(
                             }
                         }
                     } catch (e: Exception) {
-                        // Re-enable on failure
                         binding.buttonSave.isEnabled = true
                         binding.buttonCancel.isEnabled = true
                         binding.buttonDelete.isEnabled = true
@@ -257,7 +229,7 @@ fun showChoreBottomSheet(
         }
     }
 
-    bottomSheet.window?.setBackgroundDrawableResource(R.color.transparent)
+    bottomSheet.window?.setBackgroundDrawableResource(android.R.color.transparent)
     bottomSheet.setContentView(binding.root)
     bottomSheet.show()
 }
